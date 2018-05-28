@@ -19,9 +19,9 @@ private:
 	sc2::GameRequestPtr CreateLeaveGameRequest();
 	sc2::GameRequestPtr CreateQuitRequest();
 	ResultType GetPlayerResults(sc2::Connection *client);
-	ResultType StartGameVsDefault(BotConfig Agent1, sc2::Race CompRace, sc2::Difficulty CompDifficulty, std::string Map);
+	ResultType StartGame(BotConfig Agent1, BotConfig Agent2, std::string Map, sc2::ProcessSettings process_settings);
+	ResultType StartGameVsDefault(BotConfig Agent1, sc2::Race CompRace, sc2::Difficulty CompDifficulty, std::string Map, sc2::ProcessSettings process_settings);
 	bool SendDataToConnection(sc2::Connection *Connection, const SC2APIProtocol::Request *request);
-	ResultType StartGame(BotConfig Agent1, BotConfig Agent2, std::string Map);
     void LoadAgents();
     void GetMapList();
 	std::string RemoveMapExtension(const std::string & filename);

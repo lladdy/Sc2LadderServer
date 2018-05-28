@@ -410,7 +410,7 @@ sc2::GameRequestPtr LadderManager::CreateLeaveGameRequest()
 	sc2::ProtoInterface proto;
 	sc2::GameRequestPtr request = proto.MakeRequest();
 
-	request->mutable_quit();
+	request->mutable_leave_game();
 
 	return request;
 }
@@ -489,7 +489,7 @@ bool LadderManager::SendDataToConnection(sc2::Connection *Connection, const SC2A
 	return false;
 }
 
-ResultType LadderManager::StartGameVsDefault(BotConfig Agent1, sc2::Race CompRace, sc2::Difficulty CompDifficulty, std::string Map)
+ResultType LadderManager::StartGameVsDefault(BotConfig Agent1, sc2::Race CompRace, sc2::Difficulty CompDifficulty, std::string Map, sc2::ProcessSettings process_settings)
 {
 	using namespace std::chrono_literals;
 	// Setup server that mimicks sc2.
@@ -503,17 +503,6 @@ ResultType LadderManager::StartGameVsDefault(BotConfig Agent1, sc2::Race CompRac
 	
 	server.Listen("5677", "100000", "100000", "5");
 
-	// Find game executable and run it.
-	sc2::ProcessSettings process_settings;
-	sc2::GameSettings game_settings;
-	sc2::ParseSettings(CoordinatorArgc, CoordinatorArgv, process_settings, game_settings);
-	uint64_t BotProcessId = sc2::StartProcess(process_settings.process_path,
-		{ "-listen", "127.0.0.1",
-		"-port", "5679",
-		"-displayMode", "0",
-		"-dataVersion", process_settings.data_version }
-	);
-
 	// Connect to running sc2 process.
 	sc2::Connection client;
 	client.Connect("127.0.0.1", 5679);
@@ -524,7 +513,7 @@ ResultType LadderManager::StartGameVsDefault(BotConfig Agent1, sc2::Race CompRac
 		sc2::SleepFor(1000);
 		if (connectionAttemptsClient > 60)
 		{
-			std::cout << "Failed to connect client 1. BotProcessID: " << BotProcessId << std::endl;
+			std::cout << "Failed to connect client 1." << std::endl;
 			return ResultType::InitializationError;
 		}
 	}
@@ -606,9 +595,9 @@ ResultType LadderManager::StartGameVsDefault(BotConfig Agent1, sc2::Race CompRac
 	return CurrentResult;
 }
 
-ResultType LadderManager::StartGame(BotConfig Agent1, BotConfig Agent2, std::string Map)
+ResultType LadderManager::StartGame(BotConfig Agent1, BotConfig Agent2, std::string Map, sc2::ProcessSettings process_settings)
 {
-	
+
 	using namespace std::chrono_literals;
 	// Setup server that mimicks sc2.
 	std::string Agent1Path = GetBotCommandLine(Agent1, 5677, PORT_START);
@@ -621,22 +610,6 @@ ResultType LadderManager::StartGame(BotConfig Agent1, BotConfig Agent2, std::str
 	sc2::Server server2;
 	server.Listen("5677", "100000", "100000", "5");
 	server2.Listen("5678", "100000", "100000", "5");
-	// Find game executable and run it.
-	sc2::ProcessSettings process_settings;
-	sc2::GameSettings game_settings;
-	sc2::ParseSettings(CoordinatorArgc, CoordinatorArgv, process_settings, game_settings);
-	uint64_t Bot1ProcessId = sc2::StartProcess(process_settings.process_path,
-	{ "-listen", "127.0.0.1",
-		"-port", "5679",
-		"-displayMode", "0",
-		"-dataVersion", process_settings.data_version }
-	);
-	uint64_t Bot2ProcessId = sc2::StartProcess(process_settings.process_path,
-		{ "-listen", "127.0.0.1",
-		"-port", "5680",
-		"-displayMode", "0",
-		"-dataVersion", process_settings.data_version }
-	);
 
 	// Connect to running sc2 process.
 	sc2::Connection client;
@@ -647,7 +620,7 @@ ResultType LadderManager::StartGame(BotConfig Agent1, BotConfig Agent2, std::str
 		sc2::SleepFor(1000);
 		if (connectionAttemptsClient1 > 60)
 		{
-			std::cout << "Failed to connect client 1. BotProcessID: " << Bot1ProcessId << std::endl;
+			std::cout << "Failed to connect client 1." << std::endl;
 			return ResultType::InitializationError;
 		}
 	}
@@ -659,7 +632,7 @@ ResultType LadderManager::StartGame(BotConfig Agent1, BotConfig Agent2, std::str
 		sc2::SleepFor(1000);
 		if (connectionAttemptsClient2 > 60)
 		{
-			std::cout << "Failed to connect client 2. BotProcessID: " << Bot2ProcessId << std::endl;
+			std::cout << "Failed to connect client 2." << std::endl;
 			return ResultType::InitializationError;
 		}
 	}
@@ -800,9 +773,9 @@ ResultType LadderManager::StartGame(BotConfig Agent1, BotConfig Agent2, std::str
 	}
 	if (CurrentResult == Player1Crash || CurrentResult == Player2Crash)
 	{
-		sc2::SleepFor(5000);
-		KillSc2Process(Bot1ProcessId, 0);
-		KillSc2Process(Bot2ProcessId, 0);
+		//sc2::SleepFor(5000);
+		//KillSc2Process(Bot1ProcessId, 0);
+		//KillSc2Process(Bot2ProcessId, 0);
 		sc2::SleepFor(5000);
 		try
 		{
@@ -1037,6 +1010,24 @@ void LadderManager::RunLadderManager()
 	MatchupList *Matchups = new MatchupList(MatchListFile);
 	Matchups->GenerateMatches(BotConfigs, MapList);
 	Matchup NextMatch;
+
+	// Find game executable and run once for each bot
+	sc2::ProcessSettings process_settings;
+	sc2::GameSettings game_settings;
+	sc2::ParseSettings(CoordinatorArgc, CoordinatorArgv, process_settings, game_settings);
+	uint64_t Starcraft2ProcessId1 = sc2::StartProcess(process_settings.process_path,
+		{ "-listen", "127.0.0.1",
+		"-port", "5679",
+		"-displayMode", "0",
+		"-dataVersion", process_settings.data_version }
+	);
+	uint64_t Starcraft2ProcessId2 = sc2::StartProcess(process_settings.process_path,
+		{ "-listen", "127.0.0.1",
+		"-port", "5680",
+		"-displayMode", "0",
+		"-dataVersion", process_settings.data_version }
+	);
+
 	try
 	{
 
@@ -1053,7 +1044,7 @@ void LadderManager::RunLadderManager()
 					NextMatch.Agent1 = NextMatch.Agent2;
 					NextMatch.Agent2 = Temp;
 				}
-				result = StartGameVsDefault(NextMatch.Agent1, NextMatch.Agent2.Race, NextMatch.Agent2.Difficulty, NextMatch.Map);
+				result = StartGameVsDefault(NextMatch.Agent1, NextMatch.Agent2.Race, NextMatch.Agent2.Difficulty, NextMatch.Map, process_settings);
 			}
 			else
 			{
@@ -1064,7 +1055,7 @@ void LadderManager::RunLadderManager()
 					continue;
 				}
 				*/
-				result = StartGame(NextMatch.Agent1, NextMatch.Agent2, NextMatch.Map);
+				result = StartGame(NextMatch.Agent1, NextMatch.Agent2, NextMatch.Map, process_settings);
 			}
 			UploadMime(result, NextMatch);
 			Matchups->SaveMatchList();
@@ -1076,7 +1067,43 @@ void LadderManager::RunLadderManager()
 		std::cout << "Exception in game " << e.what() << " \r\n";
 		SaveError(NextMatch.Agent1.Name, NextMatch.Agent2.Name, NextMatch.Map);
 	}
-	
+
+	// Close SC2 instances
+	// todo: make it so we reuse the clients instead of having to re-create them here
+	// todo: and then clean this up.
+
+	sc2::Connection client1;
+	int connectionAttemptsClient1 = 0;
+	while (!client1.Connect("127.0.0.1", 5679))
+	{
+		connectionAttemptsClient1++;
+		sc2::SleepFor(1000);
+		if (connectionAttemptsClient1 > 60)
+		{
+			std::cout << "Failed to connect client 1." << std::endl;
+		}
+	}
+	sc2::Connection client2;
+	int connectionAttemptsClient2 = 0;
+	while (!client2.Connect("127.0.0.1", 5680))
+	{
+		connectionAttemptsClient2++;
+		sc2::SleepFor(1000);
+		if (connectionAttemptsClient2 > 60)
+		{
+			std::cout << "Failed to connect client 2." << std::endl;
+		}
+	}	
+
+	if (!SendDataToConnection(&client1, CreateQuitRequest().get()))
+	{
+		std::cout << "CreateQuitRequest failed for Client 1." << std::endl;
+	}
+	sc2::SleepFor(1000);
+	if (!SendDataToConnection(&client2, CreateQuitRequest().get()))
+	{
+		std::cout << "CreateQuitRequest failed for Client 2." << std::endl;
+	}
 }
 
 void LadderManager::SaveError(std::string Agent1, std::string Agent2, std::string Map)
