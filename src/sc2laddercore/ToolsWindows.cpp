@@ -106,4 +106,32 @@ bool MoveReplayFile(const char* lpExistingFileName, const char* lpNewFileName) {
 	return MoveFile(lpExistingFileName, lpNewFileName);
 }
 
+std::string GetExecutableFullFilename()
+{
+	char buf[MAX_PATH + 1];
+	auto bytes = GetModuleFileName(NULL, buf, MAX_PATH + 1);
+	if (bytes == 0)
+		throw "Error: Could not retrieve executable file name.";
+	return std::string(buf);
+}
+
+std::string GetExecutableDirectory()
+{
+	auto executableFile = GetExecutableFullFilename();
+	auto found = executableFile.find_last_of('\\');
+	if (found == std::string::npos)
+		throw "Expected backslash in executableFile, but none was present.";
+	// strip out the executable filename at the end
+	return executableFile.substr(0, found);
+}
+
+std::string GetWorkingDirectory()
+{
+	char buf[MAX_PATH + 1];
+	if (GetCurrentDirectory(MAX_PATH + 1, buf))
+		return buf;
+	else
+		throw "Unable to get working directory: call to GetCurrentDirectory() returned nothing.";
+}
+
 #endif

@@ -11,3 +11,9 @@ void KillSc2Process(unsigned long pid);
 
 bool MoveReplayFile(const char* lpExistingFileName, const char* lpNewFileName);
 
+std::string GetExecutableFullFilename();
+
+std::string GetExecutableDirectory();
+
+std::string GetWorkingDirectory();
+

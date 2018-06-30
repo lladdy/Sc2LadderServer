@@ -105,4 +105,20 @@ bool MoveReplayFile(const char* lpExistingFileName, const  char* lpNewFileName)
     return ret == 0;
 }
 
+
+std::string GetExecutableFullFilename()
+{
+	throw "GetExecutableFullFilename is not implemented on unix";
+}
+
+std::string GetExecutableDirectory()
+{
+	throw "GetExecutableDirectory is not implemented on unix";
+}
+
+std::string GetWorkingDirectory()
+{
+	throw "GetWorkingDirectory is not implemented on unix";
+}
+
 #endif
