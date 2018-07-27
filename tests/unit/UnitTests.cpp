@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 bool UnitTest_Dummy(int argc, char** argv) {
 	try
