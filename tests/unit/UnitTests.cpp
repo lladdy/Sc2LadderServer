@@ -28,6 +28,12 @@ bool UnitTest_Dummy(int argc, char** argv) {
 int main(int argc, char** argv) {
 	bool success = true;
 
+    // just testing jenkins reporting
+    std::ofstream myfile;
+    myfile.open("./UnitTestsReport.html");
+    myfile << "Test report";
+    myfile.close();
+
 	TEST(UnitTest_Dummy);
 	// Add more tests here...
 
