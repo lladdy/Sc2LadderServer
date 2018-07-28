@@ -15,7 +15,6 @@ bool FileExists(const std::string& filename);
 
 bool CanFindFileInEnvironment(const std::string& filename);
 
-
 // Tools<Platform>.cpp
 
 void StartBotProcess(const BotConfig &Agent, const std::string& CommandLine, unsigned long *ProcessId);
