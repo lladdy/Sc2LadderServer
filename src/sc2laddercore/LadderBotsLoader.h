@@ -5,6 +5,8 @@
 #include <string>
 #include <document.h>
 
+#define PLAYER_ID_LENGTH 16
+
 class LadderBotsLoader {
 public:
     void Load(std::string file);

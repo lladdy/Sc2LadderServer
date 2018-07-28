@@ -7,7 +7,6 @@
 #include <sc2api/sc2_api.h>
 #include "LadderConfig.h"
 #define PORT_START 5690
-#define PLAYER_ID_LENGTH 16
 #define FIRST_PLAYER_NAME "foo5679"
 #define SECOND_PLAYER_NAME "foo5680"
 

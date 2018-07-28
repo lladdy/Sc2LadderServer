@@ -826,23 +826,6 @@ LadderManager::LadderManager(int InCoordinatorArgc, char** inCoordinatorArgv, ch
 {
 }
 
-std::string LadderManager::GerneratePlayerId(size_t Length)
-{
-	static const char hexdigit[16] = { '0', '1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
-	std::string outstring;
-	if (Length < 1)
-	{
-		return outstring;
-
-	}
-	--Length;
-	for (int i = 0; i < Length; ++i)
-	{
-		outstring.append(1, hexdigit[rand() % sizeof hexdigit]);
-	}
-	return outstring;
-}
-
 bool LadderManager::LoadSetup()
 {
 	delete Config;
