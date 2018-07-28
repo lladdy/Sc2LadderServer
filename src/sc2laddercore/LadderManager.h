@@ -1,4 +1,5 @@
 #pragma once
+#include "Webservice.h"
 #include <memory.h>
 #include <sstream>
 #include <mutex>
@@ -53,11 +54,11 @@ private:
 
 	void LoadAgents();
 	bool UploadMime(ResultType result, const Matchup &ThisMatch);
-	bool LoginToServer();
     std::map<std::string, BotConfig> BotConfigs;
     std::vector<std::string> MapList;
 	std::string ResultsLogFile;
 	LadderConfig *PlayerIds;
+	Webservice Webservice;
 
 	void SaveError(const std::string &Agent1, const std::string &Agent2, const std::string &Map);
 
@@ -68,9 +69,6 @@ private:
 	bool EnableReplayUploads;
 	bool EnableServerLogin;
 	bool EnablePlayerIds;
-	std::string ServerUsername;
-	std::string ServerPassword;
-	std::string ServerLoginAddress;
 	uint32_t MaxGameTime;
     bool Sc2Launched;
     sc2::Coordinator *coordinator;
