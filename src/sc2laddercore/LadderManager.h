@@ -41,7 +41,6 @@ public:
 	static sc2::GameRequestPtr CreateLeaveGameRequest();
 	static sc2::GameRequestPtr CreateQuitRequest();
 	static sc2::GameResponsePtr CreateErrorResponse();
-	static std::string RemoveMapExtension(const std::string & filename);
 	static bool SendDataToConnection(sc2::Connection *Connection, const SC2APIProtocol::Request *request);
 
 private:
