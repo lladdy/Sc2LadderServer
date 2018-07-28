@@ -40,6 +40,7 @@
 #include "LadderManager.h"
 #include "MatchupList.h"
 #include "Tools.h"
+#include "LadderBotsLoader.h"
 
 #ifdef ENABLE_CURL
 #include "curl.h"
@@ -958,115 +959,23 @@ void LadderManager::SaveJsonResult(const BotConfig &Bot1, const BotConfig &Bot2,
 }
 
 
-void LadderManager::LoadAgents()
+void LadderManager::LoadBots()
 {
-	std::string BotConfigFile = Config->GetValue("BotConfigFile");
-	if (BotConfigFile.length() < 1)
-	{
-		return;
+    LadderBotsLoader loader;
+    loader.Load(Config->GetValue("BotConfigFile"));
+	std::vector<BotConfig> botConfigs = loader.GetBotConfigs();
+	for(auto botConfig : botConfigs) {
+		this->BotConfigs.insert(std::make_pair(std::string(botConfig.BotName), botConfig));
 	}
-	std::ifstream t(BotConfigFile);
-	std::stringstream buffer;
-	buffer << t.rdbuf();
-	std::string BotConfigString = buffer.str();
-	rapidjson::Document doc;
-	bool parsingFailed = doc.Parse(BotConfigString.c_str()).HasParseError();
-	if (parsingFailed)
-	{
-		std::cerr << "Unable to parse bot config file: " << BotConfigFile << std::endl;
-		return;
-	}
-	if (doc.HasMember("Bots") && doc["Bots"].IsObject())
-	{
-		const rapidjson::Value & Bots = doc["Bots"];
-		for (auto itr = Bots.MemberBegin(); itr != Bots.MemberEnd(); ++itr)
-		{
-			BotConfig NewBot;
-			NewBot.BotName = itr->name.GetString();
-			const rapidjson::Value &val = itr->value;
+	this->BotConfigs = loader.GetBotConfigs();
+	this->MapList = loader.GetMaps();
 
-			if (val.HasMember("Race") && val["Race"].IsString())
-			{
-				NewBot.Race = GetRaceFromString(val["Race"].GetString());
-			}
-			else
-			{
-				std::cerr << "Unable to parse race for bot " << NewBot.BotName << std::endl;
-				continue;
-			}
-			if (val.HasMember("Type") && val["Type"].IsString())
-			{
-				NewBot.Type = GetTypeFromString(val["Type"].GetString());
-			}
-			else
-			{
-				std::cerr << "Unable to parse type for bot " << NewBot.BotName << std::endl;
-				continue;
-			}
-			if (NewBot.Type != DefaultBot)
-			{
-				if (val.HasMember("RootPath") && val["RootPath"].IsString())
-				{
-					NewBot.RootPath = val["RootPath"].GetString();
-					if (NewBot.RootPath.back() != '/')
-					{
-						NewBot.RootPath += '/';
-					}
-				}
-				else
-				{
-					std::cerr << "Unable to parse root path for bot " << NewBot.BotName << std::endl;
-					continue;
-				}
-				if (val.HasMember("FileName") && val["FileName"].IsString())
-				{
-					NewBot.FileName = val["FileName"].GetString();
-				}
-				else
-				{
-					std::cerr << "Unable to parse file name for bot " << NewBot.BotName << std::endl;
-					continue;
-				}
-				if (!sc2::DoesFileExist(NewBot.RootPath + NewBot.FileName))
-				{
-					std::cerr << "Unable to parse bot " << NewBot.BotName << std::endl;
-					std::cerr << "Is the path " << NewBot.RootPath << "correct?" << std::endl;
-					continue;
-				}
-				if (val.HasMember("Args") && val["Args"].IsString())
-				{
-					NewBot.Args = val["Arg"].GetString();
-				}
-			}
-			else
-			{
-				if (val.HasMember("Difficulty") && val["Difficulty"].IsString())
-				{
-					NewBot.Difficulty = GetDifficultyFromString(val["Difficulty"].GetString());
-				}
-			}
-			if (EnablePlayerIds)
-			{
-				NewBot.PlayerId = PlayerIds->GetValue(NewBot.BotName);
-				if (NewBot.PlayerId.empty())
-				{
-					NewBot.PlayerId = GerneratePlayerId(PLAYER_ID_LENGTH);
-					PlayerIds->AddValue(NewBot.BotName, NewBot.PlayerId);
-					PlayerIds->WriteConfig();
-				}
-			}
-			BotConfigs.insert(std::make_pair(std::string(NewBot.BotName), NewBot));
+	this->ValidateBotConfigs();
+}
 
-		}
-	}
-	if (doc.HasMember("Maps") && doc["Maps"].IsArray())
-	{
-		const rapidjson::Value & Maps = doc["Maps"];
-		for (auto itr = Maps.Begin(); itr != Maps.End(); ++itr)
-		{
-			MapList.push_back(itr->GetString());
-		}
-	}
+void LadderManager::ValidateBotConfigs() {
+	// todo
+	throw "ValidateBotConfigs is not implemented yet.";
 }
 
 std::string LadderManager::RemoveMapExtension(const std::string& filename) {
@@ -1245,7 +1154,7 @@ bool LadderManager::LoginToServer()
 void LadderManager::RunLadderManager()
 {
 
-	LoadAgents();
+	LoadBots();
 	std::cout << "Starting with " << MapList.size() << " maps:" << std::endl;
 	for (auto &map : MapList)
 	{

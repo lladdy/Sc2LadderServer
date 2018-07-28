@@ -3,6 +3,7 @@
 #include <sstream>
 #include <mutex>
 #include <iostream>
+#include <memory>
 #include <sc2api/sc2_api.h>
 #include "LadderConfig.h"
 #define PORT_START 5690
@@ -51,11 +52,12 @@ private:
 	ResultType StartGame(const BotConfig &Agent1, const BotConfig &Agent2, const std::string &Map, int32_t &GameLoop);
 	void ChangeBotNames(const std::string ReplayFile, const std::string &Bot1Name, const std::string Bot2Name);
 
-	void LoadAgents();
+	void LoadBots();
+    void ValidateBotConfigs();
 	bool UploadMime(ResultType result, const Matchup &ThisMatch);
 	bool LoginToServer();
-    std::map<std::string, BotConfig> BotConfigs;
-    std::vector<std::string> MapList;
+	std::unique_ptr<std::map<std::string, BotConfig>> BotConfigs;
+	std::unique_ptr<std::vector<std::string>> MapList;
 	std::string ResultsLogFile;
 	LadderConfig *PlayerIds;
 
