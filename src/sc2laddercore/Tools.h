@@ -3,7 +3,6 @@
 #include <string>
 #include "Types.h"
 
-
 // ToolsCommon.cpp
 
 std::vector<std::string> SplitStringByCharacter(const std::string& string, const char splitter);
