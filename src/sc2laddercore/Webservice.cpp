@@ -1,7 +1,10 @@
 #include "Webservice.h"
 
-#include "Types.h
+#include "Types.h"
 #include "LadderConfig.h"
+#include "Tools.h"
+
+#include <fstream>
 
 #ifdef ENABLE_CURL
 #include "curl.h"
@@ -12,8 +15,8 @@ bool Webservice::UploadMime(LadderConfig& Config, ResultType result, const Match
 #ifndef ENABLE_CURL
     return true;
 #else
-    std::string ReplayDir = Config->GetValue("LocalReplayDirectory");
-	std::string UploadResultLocation = Config->GetValue("UploadResultLocation");
+    std::string ReplayDir = Config.GetValue("LocalReplayDirectory");
+	std::string UploadResultLocation = Config.GetValue("UploadResultLocation");
 	std::string RawMapName = RemoveMapExtension(ThisMatch.Map);
 	std::string ReplayFile;
 	if (ThisMatch.Agent2.Type == BotType::DefaultBot)
@@ -127,16 +130,16 @@ bool Webservice::LoginToServer(LadderConfig& Config)
 		/* Fill in the filename field */
 		field = curl_mime_addpart(form);
 		curl_mime_name(field, "username");
-		curl_mime_data(field, Config->GetValue("ServerUsername").c_str(), CURL_ZERO_TERMINATED);
+		curl_mime_data(field, Config.GetValue("ServerUsername").c_str(), CURL_ZERO_TERMINATED);
 		field = curl_mime_addpart(form);
 		curl_mime_name(field, "password");
-		curl_mime_data(field, Config->GetValue("ServerPassword").c_str(), CURL_ZERO_TERMINATED);
+		curl_mime_data(field, Config.GetValue("ServerPassword").c_str(), CURL_ZERO_TERMINATED);
 
 		/* initialize custom header list (stating that Expect: 100-continue is not
 		wanted */
 		headerlist = curl_slist_append(headerlist, buf);
 		/* what URL that receives this POST */
-		curl_easy_setopt(curl, CURLOPT_URL, Config->GetValue("ServerLoginAddress").c_str());
+		curl_easy_setopt(curl, CURLOPT_URL, Config.GetValue("ServerLoginAddress").c_str());
 
 		curl_easy_setopt(curl, CURLOPT_MIMEPOST, form);
 
