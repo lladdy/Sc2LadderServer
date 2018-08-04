@@ -846,7 +846,7 @@ bool LadderManager::LoadSetup()
 {
 	delete Config;
 	Config = new LadderConfig(ConfigFile);
-	if (!Config->ParseConfig())
+	if (!Config->FromFile())
 	{
 		std::cout << "No valid config found at " << ConfigFile << std::endl;
 		return false;
@@ -1052,7 +1052,7 @@ void LadderManager::LoadAgents()
 				{
 					NewBot.PlayerId = GerneratePlayerId(PLAYER_ID_LENGTH);
 					PlayerIds->AddValue(NewBot.BotName, NewBot.PlayerId);
-					PlayerIds->WriteConfig();
+                    PlayerIds->ToFile();
 				}
 			}
 			BotConfigs.insert(std::make_pair(std::string(NewBot.BotName), NewBot));

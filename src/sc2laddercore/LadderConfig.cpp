@@ -5,14 +5,13 @@
 #include <fstream>      
 #include "LadderConfig.h"
 
-LadderConfig::LadderConfig(const std::string &InConfigFile)
-	:ConfigFileLocation(InConfigFile)
+LadderConfig::LadderConfig()
 {
 }
 
-bool LadderConfig::ParseConfig()
+bool LadderConfig::FromFile(std::string filename) {
 {
-	std::ifstream ifs(ConfigFileLocation, std::ifstream::binary);
+	std::ifstream ifs(filename, std::ifstream::binary);
 	if (!ifs)
 	{
 		return false;
@@ -38,9 +37,9 @@ bool LadderConfig::ParseConfig()
 	return true;
 }
 
-bool LadderConfig::WriteConfig()
+bool LadderConfig::ToFile(std::string filename)
 {
-	std::ofstream outfile(ConfigFileLocation, std::ofstream::binary);
+	std::ofstream outfile(filename, std::ofstream::binary);
 	for (const auto& setting : options)
 	{
 		outfile << setting.first << "=" << setting.second << std::endl;
