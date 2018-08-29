@@ -9,10 +9,16 @@ else ()
 endif ()
 
 # copy test data/configs and replace any variables they might contain
+# eventually this will need to be automated so cmake finds and copies these on its own.
 configure_file(${CMAKE_CURRENT_LIST_DIR}/integration_test_configs/TestMatch_Bot1Eliminated/LadderBots.json
     ${EXECUTABLE_OUTPUT_PATH}/integration_test_configs/TestMatch_Bot1Eliminated/LadderBots.json)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/integration_test_configs/TestMatch_Bot1Eliminated/LadderManager.json
     ${EXECUTABLE_OUTPUT_PATH}/integration_test_configs/TestMatch_Bot1Eliminated/LadderManager.json)
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/integration_test_configs/TestMatch_RandomMovementBot2Eliminated/LadderBots.json
+    ${EXECUTABLE_OUTPUT_PATH}/integration_test_configs/TestMatch_RandomMovementBot2Eliminated/LadderBots.json)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/integration_test_configs/TestMatch_RandomMovementBot2Eliminated/LadderManager.json
+    ${EXECUTABLE_OUTPUT_PATH}/integration_test_configs/TestMatch_RandomMovementBot2Eliminated/LadderManager.json)
 
 # Include directories
 include_directories(SYSTEM

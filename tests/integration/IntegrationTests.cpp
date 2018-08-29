@@ -82,6 +82,31 @@ bool TestMatch_Bot1Eliminated(int argc, char** argv) {
 	}
 }
 
+bool TestMatch_RandomMovementBot2Eliminated(int argc, char** argv) {
+	try
+	{
+		// Write out the matchup file before launching LadderManager so we can dictate the bot load order
+		std::ofstream myfile;
+		myfile.open("./integration_test_configs/TestMatch_RandomMovementBot2Eliminated/matchuplist");
+		myfile << "\"DebugBot1\" \"DebugBot2\" InterloperLE.SC2Map";
+		myfile.close();
+
+		// Run LadderManager
+		LadderManager LadderMan(argc, argv, "./integration_test_configs/TestMatch_RandomMovementBot2Eliminated/LadderManager.json");
+		if (LadderMan.LoadSetup())
+		{
+			LadderMan.RunLadderManager();
+		}
+		return true;
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "Exception in TestMatch_RandomMovementBot2Eliminated" << std::endl;
+		std::cerr << e.what() << std::endl;
+		return false;
+	}
+}
+
 // Handy macro from: s2client-api/tests/all_tests.cc
 #define TEST(X)                                                     \
     std::cout << "Running integration test: " << #X << std::endl;   \
@@ -99,7 +124,7 @@ int main(int argc, char** argv) {
 	TEST(TestLadderConfig);
 
 	TEST(TestMatch_Bot1Eliminated);
-	//TEST(TestMatch_Bot2Eliminated);
+	TEST(TestMatch_RandomMovementBot2Eliminated);
 	//TEST(sc2ai::TestMatch_Bot1Leave);
 	//TEST(sc2ai::TestMatch_Bot2Leave);
 	//TEST(sc2ai::TestMatch_Bot1Quit);
