@@ -5,7 +5,8 @@
       "Race": "Terran",
       "Type": "binarycpp",
       "RootPath": "./",
-      "FileName": "@DEBUG_BOT_FILENAME@"
+      "FileName": "@DEBUG_BOT_FILENAME@",
+      "Args": "-d Lose"
     },
     "DebugBot2": {
       "Race": "Terran",
