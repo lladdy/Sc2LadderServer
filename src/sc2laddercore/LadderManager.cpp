@@ -1040,7 +1040,7 @@ void LadderManager::LoadAgents()
 				}
 				if (val.HasMember("Args") && val["Args"].IsString())
 				{
-					NewBot.Args = val["Arg"].GetString();
+					NewBot.Args = val["Args"].GetString();
 				}
 				if (val.HasMember("Debug") && val["Debug"].IsBool()) {
 					NewBot.Debug = val["Debug"].GetBool();
