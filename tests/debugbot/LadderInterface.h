@@ -69,7 +69,7 @@ static sc2::Race GetRaceFromString(const std::string & RaceIn)
 	return sc2::Race::Random;
 }
 
-struct ConnectionOptions
+struct CommandlineOptions
 {
 	int32_t GamePort;
 	int32_t StartPort;
@@ -78,9 +78,11 @@ struct ConnectionOptions
 	sc2::Difficulty ComputerDifficulty;
 	sc2::Race ComputerRace;
 	std::string OpponentId;
+    // DebugBot
+    std::string DebugMode;
 };
 
-static void ParseArguments(int argc, char *argv[], ConnectionOptions &connect_options)
+static void ParseArguments(int argc, char *argv[], CommandlineOptions &connect_options)
 {
 	sc2::ArgParser arg_parser(argv[0]);
 	arg_parser.AddOptions({
@@ -90,7 +92,9 @@ static void ParseArguments(int argc, char *argv[], ConnectionOptions &connect_op
 		{ "-c", "--ComputerOpponent", "If we set up a computer oppenent" },
 		{ "-a", "--ComputerRace", "Race of computer oppent"},
 		{ "-d", "--ComputerDifficulty", "Difficulty of computer oppenent"},
-		{ "-x", "--OpponentId", "PlayerId of opponent"}
+		{ "-x", "--OpponentId", "PlayerId of opponent"},
+        // DebugBot custom arguments
+        { "-d", "--DebugMode", "DebugMode - what you want DebugBot to do. Defaults to DoNothing." }
 		});
 	arg_parser.Parse(argc, argv);
 	std::string GamePortStr;
@@ -122,14 +126,12 @@ static void ParseArguments(int argc, char *argv[], ConnectionOptions &connect_op
 	{
 		connect_options.ComputerOpponent = false;
 	}
-	arg_parser.Get("OpponentId", connect_options.OpponentId);
+    arg_parser.Get("OpponentId", connect_options.OpponentId);
+    arg_parser.Get("DebugMode", connect_options.DebugMode);
 }
 
-static void RunBot(int argc, char *argv[], sc2::Agent *Agent,sc2::Race race)
+static void RunBot(CommandlineOptions Options, sc2::Agent *Agent,sc2::Race race)
 {
-	ConnectionOptions Options;
-	ParseArguments(argc, argv, Options);
-
 	sc2::Coordinator coordinator;
 
 	// Add the custom bot, it will control the players.
