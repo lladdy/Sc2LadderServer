@@ -733,47 +733,68 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	{
 		CurrentResult = GetPlayerResults(&client2);
 	}
+	PrintThread{} << "1" << std::endl;
 	sc2::SleepFor(1000);
 	std::string ReplayDir = Config->GetValue("LocalReplayDirectory");
 
 	std::string ReplayFile = ReplayDir + Agent1.BotName + "v" + Agent2.BotName + "-" + RemoveMapExtension(Map) + ".SC2Replay";
 	ReplayFile.erase(remove_if(ReplayFile.begin(), ReplayFile.end(), isspace), ReplayFile.end());
+	PrintThread{} << "2" << std::endl;
 	if (!SaveReplay(&client, ReplayFile))
 	{
+		PrintThread{} << "3" << std::endl;
 		SaveReplay(&client2, ReplayFile);
 	}
+	PrintThread{} << "4" << std::endl;
 	sc2::SleepFor(1000);
+	PrintThread{} << "5" << std::endl;
 	if (!SendDataToConnection(&client, CreateLeaveGameRequest().get()))
 	{
 		PrintThread{} << "CreateLeaveGameRequest failed for Client 1." << std::endl;
 	}
+	PrintThread{} << "6" << std::endl;
 	sc2::SleepFor(1000);
+	PrintThread{} << "7" << std::endl;
 	if (!SendDataToConnection(&client2, CreateLeaveGameRequest().get()))
 	{
 		PrintThread{} << "CreateLeaveGameRequest failed for Client 2." << std::endl;
 	}
+	PrintThread{} << "8" << std::endl;
 	sc2::SleepFor(1000);
+	PrintThread{} << "9" << std::endl;
 	if (server.HasRequest() && server.connections_.size() > 0)
 	{
+		PrintThread{} << "10" << std::endl;
 		server.SendRequest();
 	}
+	PrintThread{} << "11" << std::endl;
 	sc2::SleepFor(1000);
+	PrintThread{} << "12" << std::endl;
 	if (server2.HasRequest() && server2.connections_.size() > 0)
 	{
+		PrintThread{} << "13" << std::endl;
 		server2.SendRequest();
 	}
-	ChangeBotNames(ReplayFile, Agent1.BotName, Agent2.BotName);
+	PrintThread{} << "14" << std::endl;
+	//ChangeBotNames(ReplayFile, Agent1.BotName, Agent2.BotName);
 
 	if (CurrentResult == Player1Crash || CurrentResult == Player2Crash)
 	{
+		PrintThread{} << "15" << std::endl;
 		sc2::SleepFor(5000);
+		PrintThread{} << "16" << std::endl;
 		KillSc2Process((unsigned long)Bot1ProcessId);
+		PrintThread{} << "17" << std::endl;
 		KillSc2Process((unsigned long)Bot2ProcessId);
+		PrintThread{} << "18" << std::endl;
 		sc2::SleepFor(5000);
 		try
 		{
+			PrintThread{} << "19" << std::endl;
 			bot1UpdateThread.wait();
+			PrintThread{} << "20" << std::endl;
 			bot2UpdateThread.wait();
+			PrintThread{} << "21" << std::endl;
 
 		}
 		catch (const std::exception& e)
@@ -782,11 +803,14 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 		}
 
 	}
+	PrintThread{} << "22" << std::endl;
 	std::future_status bot1ProgStatus, bot2ProgStatus;
 	auto start = std::chrono::system_clock::now();
 	std::chrono::duration<double> elapsed_seconds;
+	PrintThread{} << "23" << std::endl;
 	while (elapsed_seconds.count() < 20)
 	{
+		PrintThread{} << "24" << std::endl;
 		bot1ProgStatus = bot1ProgramThread.wait_for(50ms);
 		bot2ProgStatus = bot2ProgramThread.wait_for(50ms);
 		if (bot1ProgStatus == std::future_status::ready && bot2ProgStatus == std::future_status::ready)
@@ -795,11 +819,13 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 		}
 		elapsed_seconds = std::chrono::system_clock::now() - start;
 	}
+	PrintThread{} << "25" << std::endl;
 	if (bot1ProgStatus != std::future_status::ready)
 	{
 		PrintThread{} << "Failed to detect end of " << Agent1.BotName << " after 20s.  Killing" << std::endl;
 		KillSc2Process(Bot1ThreadId);
 	}
+	PrintThread{} << "26" << std::endl;
 	if (bot2ProgStatus != std::future_status::ready)
 	{
 		PrintThread{} << "Failed to detect end of " << Agent2.BotName << " after 20s.  Killing" << std::endl;
