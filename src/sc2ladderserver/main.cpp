@@ -29,18 +29,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#include <fcntl.h>
-#include <signal.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
 
 enum ExitCase
 {
@@ -188,7 +180,59 @@ ExitCase GameUpdate(sc2::Connection *client, sc2::Server *server, const std::str
 	}
 }
 
-void StartBotProcessOnLinux(unsigned long *ProcessId, bool *lose)
+void StartDebugBot1(unsigned long *ProcessId)
+{
+    pid_t pID = fork();
+
+    if (pID < 0)
+    {
+        std::cerr << std::string("Can't fork the bot process, error: ") +
+                     strerror(errno) << std::endl;
+        return;
+    }
+
+    if (pID == 0) // child
+    {
+        std::vector<char*> unix_cmd;
+        unix_cmd.push_back(const_cast<char*>("DebugBot"));
+        unix_cmd.push_back(const_cast<char*>("-d"));
+        unix_cmd.push_back(const_cast<char*>("RandomMovementThenLose"));
+//        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
+        unix_cmd.push_back(const_cast<char*>("--GamePort"));
+        unix_cmd.push_back(const_cast<char*>("5677"));
+        unix_cmd.push_back(const_cast<char*>("--StartPort"));
+        unix_cmd.push_back(const_cast<char*>("5690"));
+
+        // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
+        // This hack is needed because we have to change the working directory
+        // before calling to exec.
+//        unix_cmd[0] = const_cast<char*>("DebugBot");
+
+        unix_cmd.push_back(NULL);
+
+        int ret = execv(unix_cmd[0], &unix_cmd[0]);
+
+        if (ret < 0)
+        {
+            std::cerr << std::string(": Failed to execute, error: ") + strerror(errno) << std::endl;
+            exit(errno);
+        }
+
+        exit(0);
+    }
+
+    // parent
+    *ProcessId = pID;
+
+    int exit_status = 0;
+    int ret = waitpid(pID, &exit_status, 0);
+    if (ret < 0) {
+        std::cerr << std::string("Can't wait for the child process, error:") +
+                     strerror(errno) << std::endl;
+    }
+}
+
+void StartDebugBot2(unsigned long *ProcessId)
 {
 	pid_t pID = fork();
 
@@ -201,44 +245,24 @@ void StartBotProcessOnLinux(unsigned long *ProcessId, bool *lose)
 
 	if (pID == 0) // child
 	{
-//		int ret = chdir(RootPath.c_str());
-//		if (ret < 0) {
-//			std::cerr << ": Can't change working directory to " + RootPath +
-//				", error: " + strerror(errno) << std::endl;
-//			exit(errno);
-//		}
-//
-//		if (RedirectOutput(Agent, STDERR_FILENO, "stderr.log") < 0)
-//			exit(errno);
-//
-//		if (Agent.Debug)
-//		{
-//			if (RedirectOutput(Agent, STDOUT_FILENO, "stdout.log") < 0)
-//				exit(errno);
-//		}
-//		else
-//			close(STDOUT_FILENO);
-//
-//		close(STDIN_FILENO);
-
-//		std::vector<char*> unix_cmd;
-//		std::istringstream stream(CommandLine);
-//		std::istream_iterator<std::string> begin(stream), end;
-//		std::vector<std::string> tokens(begin, end);
-//		for (const auto& i : tokens)
-//			unix_cmd.push_back(const_cast<char*>(i.c_str()));
         std::vector<char*> unix_cmd;
-        if(*lose)
-            unix_cmd.push_back(const_cast<char*>("-d RandomMovementThenLose"));
+        unix_cmd.push_back(const_cast<char*>("DebugBot"));
+        unix_cmd.push_back(const_cast<char*>("--GamePort"));
+        unix_cmd.push_back(const_cast<char*>("5678"));
+        unix_cmd.push_back(const_cast<char*>("--StartPort"));
+        unix_cmd.push_back(const_cast<char*>("5690"));
+//        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
+//        unix_cmd.push_back(const_cast<char*>("--GamePort 5678"));
+//        unix_cmd.push_back(const_cast<char*>("--StartPort 5690"));
 
 		// FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
 		// This hack is needed because we have to change the working directory
 		// before calling to exec.
-		unix_cmd[0] = const_cast<char*>("DebugBot");
+//		unix_cmd[0] = const_cast<char*>("DebugBot");
 
 		unix_cmd.push_back(NULL);
 
-		int ret = execv(unix_cmd.front(), &unix_cmd.front());
+        int ret = execv(unix_cmd[0], &unix_cmd[0]);
 
 		if (ret < 0)
 		{
@@ -384,8 +408,12 @@ int main(int argc, char** argv)
 {
 	// START INSTANCES
 
+    std::cout << "Servers listening" << std::endl;
 	server1.Listen("5677", "100000", "100000", "5");
 	server2.Listen("5678", "100000", "100000", "5");
+
+
+    std::cout << "Starting SC2 Instances" << std::endl;
 	// Find game executable and run it.
 	sc2::ProcessSettings process_settings;
 	sc2::GameSettings game_settings;
@@ -393,15 +421,19 @@ int main(int argc, char** argv)
 	uint64_t Bot1ProcessId = sc2::StartProcess(process_settings.process_path,
 		{ "-listen", "127.0.0.1",
 		"-port", "5679",
+//		"-verbose",
 		"-displayMode", "0",
 		"-dataVersion", process_settings.data_version }
 	);
 	uint64_t Bot2ProcessId = sc2::StartProcess(process_settings.process_path,
 		{ "-listen", "127.0.0.1",
 		"-port", "5680",
+//		"-verbose",
 		"-displayMode", "0",
 		"-dataVersion", process_settings.data_version }
 	);
+
+    std::cout << "Connecting clients" << std::endl;
 
 	// Connect to running sc2 process.
 	int connectionAttemptsClient1 = 0;
@@ -427,6 +459,7 @@ int main(int argc, char** argv)
 		}
 	}
 
+    std::cout << "Create game request" << std::endl;
 	sc2::GameRequestPtr Create_game_request = CreateStartGameRequest();
 	client1.Send(Create_game_request.get());
 	SC2APIProtocol::Response* create_response = nullptr;
@@ -438,20 +471,23 @@ int main(int argc, char** argv)
 			std::cout << "Create game successful" << std::endl << std::endl;
 		}
 	}
+
+
+    std::cout << "Start bots" << std::endl;
 	unsigned long Bot1ThreadId = 0;
 	unsigned long Bot2ThreadId = 0;
 	bool lose1 = true;
     bool lose2 = false;
-	auto bot1ProgramThread = std::async(&StartBotProcessOnLinux, &Bot1ThreadId, &lose1);
-	auto bot2ProgramThread = std::async(&StartBotProcessOnLinux, &Bot2ThreadId, &lose2);
+	auto bot1ProgramThread = std::async(&StartDebugBot1, &Bot1ThreadId);
+	auto bot2ProgramThread = std::async(&StartDebugBot2, &Bot2ThreadId);
 	sc2::SleepFor(500);
 	sc2::SleepFor(500);
 
 
 	// RUN GAME
 
+    std::cout << "Game update" << std::endl;
 	std::string db1 = "DB1";
-
     std::string db2 = "DB2";
 	auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, &db1);
 	auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &db2);
@@ -461,10 +497,12 @@ int main(int argc, char** argv)
 	//sc2::ProtoInterface proto_1;
 	while (GameRunning)
 	{
-		auto update1status = bot1UpdateThread.wait_for(std::chrono::seconds(0));
-		auto update2status = bot2UpdateThread.wait_for(std::chrono::seconds(0));
-		auto thread1Status = bot1ProgramThread.wait_for(std::chrono::seconds(0));
-		auto thread2Status = bot2ProgramThread.wait_for(std::chrono::seconds(0));
+
+//        std::cout << "Game running" << std::endl;
+		auto update1status = bot1UpdateThread.wait_for(std::chrono::milliseconds(1));
+		auto update2status = bot2UpdateThread.wait_for(std::chrono::milliseconds(0));
+		auto thread1Status = bot1ProgramThread.wait_for(std::chrono::milliseconds(0));
+		auto thread2Status = bot2ProgramThread.wait_for(std::chrono::milliseconds(0));
 		if (update1status == std::future_status::ready)
 		{
 			GameRunning = false;
@@ -486,6 +524,24 @@ int main(int argc, char** argv)
 
 	}
 
-	SaveReplay(&client1, "DebugBot1VsDebugBot2.SC2Replay");
+    std::cout << "Saving replay" << std::endl;
+	auto now = std::chrono::system_clock::now();
+	std::string replayName = std::to_string(std::chrono::system_clock::to_time_t (now))
+	        + "_DebugBot1VsDebugBot2.SC2Replay";
+	SaveReplay(&client1,replayName);
+
+    std::cout << "Killing SC2 processes" << std::endl;
+    int ret = kill(Bot1ThreadId, SIGKILL);
+    if (ret < 0)
+    {
+        std::cout << std::string("Failed to send SIGKILL, error:") +
+                     strerror(errno) << std::endl;
+    }
+    ret = kill(Bot2ThreadId, SIGKILL);
+    if (ret < 0)
+    {
+        std::cout << std::string("Failed to send SIGKILL, error:") +
+                     strerror(errno) << std::endl;
+    }
 }
 
