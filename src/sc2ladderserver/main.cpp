@@ -19,280 +19,28 @@
 #include <fstream>
 #include <iostream>
 #include <future>
+#include <thread>
 #include <chrono>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-//#include <sys/wait.h>
-//#include <unistd.h>
-//
-//ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Agent2, const std::string &Map, int32_t &GameLoop)
-//{
-//
-//	using namespace std::chrono_literals;
-//	// Setup server that mimicks sc2.
-//	std::string Agent1Path = GetBotCommandLine(Agent1, 5677, PORT_START, Agent2.PlayerId);
-//	std::string Agent2Path = GetBotCommandLine(Agent2, 5678, PORT_START, Agent1.PlayerId);
-//	if (Agent1Path == "" || Agent2Path == "")
-//	{
-//		return ResultType::InitializationError;
-//	}
-//	sc2::Server server;
-//	sc2::Server server2;
-//	server.Listen("5677", "100000", "100000", "5");
-//	server2.Listen("5678", "100000", "100000", "5");
-//	// Find game executable and run it.
-//	sc2::ProcessSettings process_settings;
-//	sc2::GameSettings game_settings;
-//	sc2::ParseSettings(CoordinatorArgc, CoordinatorArgv, process_settings, game_settings);
-//	uint64_t Bot1ProcessId = sc2::StartProcess(process_settings.process_path,
-//		{ "-listen", "127.0.0.1",
-//		"-port", "5679",
-//		"-displayMode", "0",
-//		"-dataVersion", process_settings.data_version }
-//	);
-//	uint64_t Bot2ProcessId = sc2::StartProcess(process_settings.process_path,
-//		{ "-listen", "127.0.0.1",
-//		"-port", "5680",
-//		"-displayMode", "0",
-//		"-dataVersion", process_settings.data_version }
-//	);
-//
-//	// Connect to running sc2 process.
-//	sc2::Connection client;
-//	int connectionAttemptsClient1 = 0;
-//	while (!client.Connect("127.0.0.1", 5679, false))
-//	{
-//		connectionAttemptsClient1++;
-//		sc2::SleepFor(1000);
-//		if (connectionAttemptsClient1 > 60)
-//		{
-//			PrintThread{} << "Failed to connect client 1. BotProcessID: " << Bot1ProcessId << std::endl;
-//			return ResultType::InitializationError;
-//		}
-//	}
-//	sc2::Connection client2;
-//	int connectionAttemptsClient2 = 0;
-//	while (!client2.Connect("127.0.0.1", 5680, false))
-//	{
-//		connectionAttemptsClient2++;
-//		sc2::SleepFor(1000);
-//		if (connectionAttemptsClient2 > 60)
-//		{
-//			PrintThread{} << "Failed to connect client 2. BotProcessID: " << Bot2ProcessId << std::endl;
-//			return ResultType::InitializationError;
-//		}
-//	}
-//
-//	std::vector<sc2::PlayerSetup> Players;
-//
-//	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent1.Race, nullptr, sc2::Easy));
-//	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent2.Race, nullptr, sc2::Easy));
-//	sc2::GameRequestPtr Create_game_request = CreateStartGameRequest(Map, Players, process_settings);
-//	client.Send(Create_game_request.get());
-//	SC2APIProtocol::Response* create_response = nullptr;
-//	if (client.Receive(create_response, 100000))
-//	{
-//		PrintThread{} << "Recieved create game response " << create_response->data().DebugString() << std::endl;
-//		if (ProcessResponse(create_response->create_game()))
-//		{
-//			PrintThread{} << "Create game successful" << std::endl << std::endl;
-//		}
-//	}
-//	unsigned long Bot1ThreadId = 0;
-//	unsigned long Bot2ThreadId = 0;
-//	auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1Path, &Bot1ThreadId);
-//	auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2Path, &Bot2ThreadId);
-//	sc2::SleepFor(500);
-//	sc2::SleepFor(500);
-//
-//	//toDo check here already if the bots crashed.
-//
-//	auto bot1UpdateThread = std::async(&GameUpdate, &client, &server, &Agent1.BotName, MaxGameTime);
-//	auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &Agent2.BotName, MaxGameTime);
-//	sc2::SleepFor(1000);
-//
-//	ResultType CurrentResult = ResultType::InitializationError;
-//	bool GameRunning = true;
-//	//sc2::ProtoInterface proto_1;
-//	while (GameRunning)
-//	{
-//		auto update1status = bot1UpdateThread.wait_for(1s);
-//		auto update2status = bot2UpdateThread.wait_for(0ms);
-//		auto thread1Status = bot1ProgramThread.wait_for(0ms);
-//		auto thread2Status = bot2ProgramThread.wait_for(0ms);
-//		if (update1status == std::future_status::ready)
-//		{
-//			ExitCase BotExitCase = bot1UpdateThread.get();
-//			if (BotExitCase == ExitCase::ClientRequestExit)
-//			{
-//				// If Player 1 has requested exit, he has surrendered, and player 2 is awarded the win
-//				CurrentResult = ResultType::Player2Win;
-//			}
-//			else if (BotExitCase == ExitCase::ClientTimeout)
-//			{
-//				CurrentResult = ResultType::Player1Crash;
-//			}
-//			else if (BotExitCase == ExitCase::GameTimeout)
-//			{
-//				CurrentResult = ResultType::Timeout;
-//			}
-//			else
-//			{
-//				CurrentResult = ResultType::ProcessingReplay;
-//			}
-//
-//			GameRunning = false;
-//			break;
-//		}
-//		if (update2status == std::future_status::ready)
-//		{
-//			ExitCase BotExitCase = bot2UpdateThread.get();
-//			if (BotExitCase == ExitCase::ClientRequestExit)
-//			{
-//				// If Player 2 has requested exit, he has surrendered, and player 1 is awarded the win
-//				CurrentResult = ResultType::Player1Win;
-//			}
-//			else if (BotExitCase == ExitCase::ClientTimeout)
-//			{
-//				CurrentResult = ResultType::Player2Crash;
-//			}
-//			else if (BotExitCase == ExitCase::GameTimeout)
-//			{
-//				CurrentResult = ResultType::Timeout;
-//			}
-//			else
-//			{
-//				CurrentResult = ResultType::ProcessingReplay;
-//			}
-//
-//			GameRunning = false;
-//			break;
-//		}
-//		if (thread1Status == std::future_status::ready)
-//		{
-//			CurrentResult = ResultType::Player1Crash;
-//			GameRunning = false;
-//		}
-//		if (thread2Status == std::future_status::ready)
-//		{
-//			CurrentResult = ResultType::Player2Crash;
-//			GameRunning = false;
-//		}
-//
-//	}
-//	if (CurrentResult == ResultType::ProcessingReplay)
-//	{
-//		CurrentResult = GetPlayerResults(&client);
-//	}
-//	if (CurrentResult == ResultType::ProcessingReplay)
-//	{
-//		CurrentResult = GetPlayerResults(&client2);
-//	}
-//	PrintThread{} << "1" << std::endl;
-//	sc2::SleepFor(1000);
-//	std::string ReplayDir = Config->GetValue("LocalReplayDirectory");
-//
-//	std::string ReplayFile = ReplayDir + Agent1.BotName + "v" + Agent2.BotName + "-" + RemoveMapExtension(Map) + ".SC2Replay";
-//	ReplayFile.erase(remove_if(ReplayFile.begin(), ReplayFile.end(), isspace), ReplayFile.end());
-//	PrintThread{} << "2" << std::endl;
-//	if (!SaveReplay(&client, ReplayFile))
-//	{
-//		PrintThread{} << "3" << std::endl;
-//		SaveReplay(&client2, ReplayFile);
-//	}
-//	PrintThread{} << "4" << std::endl;
-//	sc2::SleepFor(1000);
-//	PrintThread{} << "5" << std::endl;
-//	if (!SendDataToConnection(&client, CreateLeaveGameRequest().get()))
-//	{
-//		PrintThread{} << "CreateLeaveGameRequest failed for Client 1." << std::endl;
-//	}
-//	PrintThread{} << "6" << std::endl;
-//	sc2::SleepFor(1000);
-//	PrintThread{} << "7" << std::endl;
-//	if (!SendDataToConnection(&client2, CreateLeaveGameRequest().get()))
-//	{
-//		PrintThread{} << "CreateLeaveGameRequest failed for Client 2." << std::endl;
-//	}
-//	PrintThread{} << "8" << std::endl;
-//	sc2::SleepFor(1000);
-//	PrintThread{} << "9" << std::endl;
-//	if (server.HasRequest() && server.connections_.size() > 0)
-//	{
-//		PrintThread{} << "10" << std::endl;
-//		server.SendRequest();
-//	}
-//	PrintThread{} << "11" << std::endl;
-//	sc2::SleepFor(1000);
-//	PrintThread{} << "12" << std::endl;
-//	if (server2.HasRequest() && server2.connections_.size() > 0)
-//	{
-//		PrintThread{} << "13" << std::endl;
-//		server2.SendRequest();
-//	}
-//	PrintThread{} << "14" << std::endl;
-//	//ChangeBotNames(ReplayFile, Agent1.BotName, Agent2.BotName);
-//
-//	if (CurrentResult == Player1Crash || CurrentResult == Player2Crash)
-//	{
-//		PrintThread{} << "15" << std::endl;
-//		sc2::SleepFor(5000);
-//		PrintThread{} << "16" << std::endl;
-//		KillSc2Process((unsigned long)Bot1ProcessId);
-//		PrintThread{} << "17" << std::endl;
-//		KillSc2Process((unsigned long)Bot2ProcessId);
-//		PrintThread{} << "18" << std::endl;
-//		sc2::SleepFor(5000);
-//		try
-//		{
-//			PrintThread{} << "19" << std::endl;
-//			bot1UpdateThread.wait();
-//			PrintThread{} << "20" << std::endl;
-//			bot2UpdateThread.wait();
-//			PrintThread{} << "21" << std::endl;
-//
-//		}
-//		catch (const std::exception& e)
-//		{
-//			PrintThread{} << e.what() << std::endl << " Unable to detect end of update thread.  Continuing" << std::endl;
-//		}
-//
-//	}
-//	PrintThread{} << "22" << std::endl;
-//	std::future_status bot1ProgStatus, bot2ProgStatus;
-//	auto start = std::chrono::system_clock::now();
-//	std::chrono::duration<double> elapsed_seconds;
-//	PrintThread{} << "23" << std::endl;
-//	while (elapsed_seconds.count() < 20)
-//	{
-//		PrintThread{} << "24" << std::endl;
-//		bot1ProgStatus = bot1ProgramThread.wait_for(50ms);
-//		bot2ProgStatus = bot2ProgramThread.wait_for(50ms);
-//		if (bot1ProgStatus == std::future_status::ready && bot2ProgStatus == std::future_status::ready)
-//		{
-//			break;
-//		}
-//		elapsed_seconds = std::chrono::system_clock::now() - start;
-//	}
-//	PrintThread{} << "25" << std::endl;
-//	if (bot1ProgStatus != std::future_status::ready)
-//	{
-//		PrintThread{} << "Failed to detect end of " << Agent1.BotName << " after 20s.  Killing" << std::endl;
-//		KillSc2Process(Bot1ThreadId);
-//	}
-//	PrintThread{} << "26" << std::endl;
-//	if (bot2ProgStatus != std::future_status::ready)
-//	{
-//		PrintThread{} << "Failed to detect end of " << Agent2.BotName << " after 20s.  Killing" << std::endl;
-//		KillSc2Process(Bot2ThreadId);
-//	}
-//	return CurrentResult;
-//}
+#include <sys/wait.h>
+#include <unistd.h>
 
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 enum ExitCase
 {
@@ -321,7 +69,7 @@ static std::string GetExitCaseString(ExitCase ExitCaseIn)
 	return "Error";
 }
 
-ExitCase GameUpdate(sc2::Connection *client, sc2::Server *server, const std::string *botName, uint32_t MaxGameTime)
+ExitCase GameUpdate(sc2::Connection *client, sc2::Server *server, const std::string *botName)
 {
 	//    std::cout << "Sending Join game request" << std::endl;
 	//    sc2::GameRequestPtr Create_game_request = CreateJoinGameRequest();
@@ -398,7 +146,7 @@ ExitCase GameUpdate(sc2::Connection *client, sc2::Server *server, const std::str
 						const SC2APIProtocol::ResponseObservation LastObservation = response->observation();
 						const SC2APIProtocol::Observation& ActualObservation = LastObservation.observation();
 						uint32_t currentGameLoop = ActualObservation.game_loop();
-						if (currentGameLoop > MaxGameTime)
+						if (currentGameLoop > 60480)
 						{
 							CurrentExitCase = ExitCase::GameTimeout;
 						}
@@ -440,82 +188,76 @@ ExitCase GameUpdate(sc2::Connection *client, sc2::Server *server, const std::str
 	}
 }
 
-void StartBotProcessOnLinux(unsigned long *ProcessId)
+void StartBotProcessOnLinux(unsigned long *ProcessId, bool *lose)
 {
-	//pid_t pID = fork();
+	pid_t pID = fork();
 
-	//if (pID < 0)
-	//{
-	//	std::cerr << Agent.BotName + ": Can't fork the bot process, error: " +
-	//		strerror(errno) << std::endl;
-	//	return;
-	//}
+	if (pID < 0)
+	{
+		std::cerr << std::string("Can't fork the bot process, error: ") +
+			strerror(errno) << std::endl;
+		return;
+	}
 
-	//if (pID == 0) // child
-	//{
-	//	int ret = chdir(Agent.RootPath.c_str());
-	//	if (ret < 0) {
-	//		std::cerr << Agent.BotName +
-	//			": Can't change working directory to " + Agent.RootPath +
-	//			", error: " + strerror(errno) << std::endl;
-	//		exit(errno);
-	//	}
+	if (pID == 0) // child
+	{
+//		int ret = chdir(RootPath.c_str());
+//		if (ret < 0) {
+//			std::cerr << ": Can't change working directory to " + RootPath +
+//				", error: " + strerror(errno) << std::endl;
+//			exit(errno);
+//		}
+//
+//		if (RedirectOutput(Agent, STDERR_FILENO, "stderr.log") < 0)
+//			exit(errno);
+//
+//		if (Agent.Debug)
+//		{
+//			if (RedirectOutput(Agent, STDOUT_FILENO, "stdout.log") < 0)
+//				exit(errno);
+//		}
+//		else
+//			close(STDOUT_FILENO);
+//
+//		close(STDIN_FILENO);
 
-	//	if (RedirectOutput(Agent, STDERR_FILENO, "stderr.log") < 0)
-	//		exit(errno);
+//		std::vector<char*> unix_cmd;
+//		std::istringstream stream(CommandLine);
+//		std::istream_iterator<std::string> begin(stream), end;
+//		std::vector<std::string> tokens(begin, end);
+//		for (const auto& i : tokens)
+//			unix_cmd.push_back(const_cast<char*>(i.c_str()));
+        std::vector<char*> unix_cmd;
+        if(*lose)
+            unix_cmd.push_back(const_cast<char*>("-d RandomMovementThenLose"));
 
-	//	if (Agent.Debug)
-	//	{
-	//		if (RedirectOutput(Agent, STDOUT_FILENO, "stdout.log") < 0)
-	//			exit(errno);
-	//	}
-	//	else
-	//		close(STDOUT_FILENO);
+		// FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
+		// This hack is needed because we have to change the working directory
+		// before calling to exec.
+		unix_cmd[0] = const_cast<char*>("DebugBot");
 
-	//	close(STDIN_FILENO);
+		unix_cmd.push_back(NULL);
 
-	//	std::vector<char*> unix_cmd;
-	//	std::istringstream stream(CommandLine);
-	//	std::istream_iterator<std::string> begin(stream), end;
-	//	std::vector<std::string> tokens(begin, end);
-	//	for (const auto& i : tokens)
-	//		unix_cmd.push_back(const_cast<char*>(i.c_str()));
+		int ret = execv(unix_cmd.front(), &unix_cmd.front());
 
-	//	// FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
-	//	// This hack is needed because we have to change the working directory
-	//	// before calling to exec.
-	//	if (Agent.Type == BinaryCpp)
-	//		unix_cmd[0] = const_cast<char*>(Agent.FileName.c_str());
+		if (ret < 0)
+		{
+			std::cerr << std::string(": Failed to execute, error: ") + strerror(errno) << std::endl;
+			exit(errno);
+		}
 
-	//	unix_cmd.push_back(NULL);
+		exit(0);
+	}
 
-	//	// NOTE (alkurbatov): For the Python bots we need to search in the PATH
-	//	// for the interpreter.
-	//	if (Agent.Type == Python || Agent.Type == Wine || Agent.Type == Mono || Agent.Type == DotNetCore || Agent.Type == Java)
-	//		ret = execvp(unix_cmd.front(), &unix_cmd.front());
-	//	else
-	//		ret = execv(unix_cmd.front(), &unix_cmd.front());
+	// parent
+	*ProcessId = pID;
 
-	//	if (ret < 0)
-	//	{
-	//		std::cerr << Agent.BotName + ": Failed to execute '" + CommandLine +
-	//			"', error: " + strerror(errno) << std::endl;
-	//		exit(errno);
-	//	}
-
-	//	exit(0);
-	//}
-
-	//// parent
-	//*ProcessId = pID;
-
-	//int exit_status = 0;
-	//int ret = waitpid(pID, &exit_status, 0);
-	//if (ret < 0) {
-	//	std::cerr << Agent.BotName +
-	//		": Can't wait for the child process, error:" +
-	//		strerror(errno) << std::endl;
-	//}
+	int exit_status = 0;
+	int ret = waitpid(pID, &exit_status, 0);
+	if (ret < 0) {
+		std::cerr << std::string("Can't wait for the child process, error:") +
+			strerror(errno) << std::endl;
+	}
 }
 
 sc2::GameRequestPtr CreateStartGameRequest()
@@ -698,25 +440,31 @@ int main(int argc, char** argv)
 	}
 	unsigned long Bot1ThreadId = 0;
 	unsigned long Bot2ThreadId = 0;
-	auto bot1ProgramThread = std::async(&StartBotProcessOnLinux, &Bot1ThreadId);
-	auto bot2ProgramThread = std::async(&StartBotProcessOnLinux, &Bot2ThreadId);
+	bool lose1 = true;
+    bool lose2 = false;
+	auto bot1ProgramThread = std::async(&StartBotProcessOnLinux, &Bot1ThreadId, &lose1);
+	auto bot2ProgramThread = std::async(&StartBotProcessOnLinux, &Bot2ThreadId, &lose2);
 	sc2::SleepFor(500);
 	sc2::SleepFor(500);
 
 
 	// RUN GAME
-	auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, "DebugBot1", 60480);
-	auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, "DebugBot2", 60480);
+
+	std::string db1 = "DB1";
+
+    std::string db2 = "DB2";
+	auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, &db1);
+	auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &db2);
 	sc2::SleepFor(1000);
 
 	bool GameRunning = true;
 	//sc2::ProtoInterface proto_1;
 	while (GameRunning)
 	{
-		auto update1status = bot1UpdateThread.wait_for(1ms);
-		auto update2status = bot2UpdateThread.wait_for(0ms);
-		auto thread1Status = bot1ProgramThread.wait_for(0ms);
-		auto thread2Status = bot2ProgramThread.wait_for(0ms);
+		auto update1status = bot1UpdateThread.wait_for(std::chrono::seconds(0));
+		auto update2status = bot2UpdateThread.wait_for(std::chrono::seconds(0));
+		auto thread1Status = bot1ProgramThread.wait_for(std::chrono::seconds(0));
+		auto thread2Status = bot2ProgramThread.wait_for(std::chrono::seconds(0));
 		if (update1status == std::future_status::ready)
 		{
 			GameRunning = false;
