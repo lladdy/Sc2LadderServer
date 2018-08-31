@@ -399,6 +399,16 @@ bool SaveReplay(sc2::Connection *client, const std::string& path) {
 	return true;
 }
 
+sc2::GameRequestPtr CreateLeaveGameRequest()
+{
+    sc2::ProtoInterface proto;
+    sc2::GameRequestPtr request = proto.MakeRequest();
+
+    request->mutable_quit();
+
+    return request;
+}
+
 sc2::Server server1;
 sc2::Server server2;
 sc2::Connection client1;
@@ -530,7 +540,30 @@ int main(int argc, char** argv)
 	        + "_DebugBot1VsDebugBot2.SC2Replay";
 	SaveReplay(&client1,replayName);
 
-    std::cout << "Killing SC2 processes" << std::endl;
+    sc2::SleepFor(1000);
+    if (!SendDataToConnection(&client1, CreateLeaveGameRequest().get()))
+    {
+        std::cout << "CreateLeaveGameRequest failed for Client 1." << std::endl;
+    }
+    sc2::SleepFor(1000);
+    if (!SendDataToConnection(&client2, CreateLeaveGameRequest().get()))
+    {
+        std::cout << "CreateLeaveGameRequest failed for Client 2." << std::endl;
+    }
+
+
+    sc2::SleepFor(1000);
+    if (server1.HasRequest() && server1.connections_.size() > 0)
+    {
+        server1.SendRequest();
+    }
+    sc2::SleepFor(1000);
+    if (server2.HasRequest() && server2.connections_.size() > 0)
+    {
+        server2.SendRequest();
+    }
+
+    std::cout << "Killing Bot processes" << std::endl;
     int ret = kill(Bot1ThreadId, SIGKILL);
     if (ret < 0)
     {
