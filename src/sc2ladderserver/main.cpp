@@ -555,12 +555,12 @@ int main(int argc, char** argv)
     sc2::SleepFor(1000);
     if (server1.HasRequest() && server1.connections_.size() > 0)
     {
-        server1.SendRequest();
+        server1.SendRequest(client1.connection_);
     }
     sc2::SleepFor(1000);
     if (server2.HasRequest() && server2.connections_.size() > 0)
     {
-        server2.SendRequest();
+        server2.SendRequest(client1.connection_);
     }
 
     std::cout << "Killing Bot processes" << std::endl;
