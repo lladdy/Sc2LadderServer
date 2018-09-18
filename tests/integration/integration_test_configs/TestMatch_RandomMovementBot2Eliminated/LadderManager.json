@@ -1,6 +1,6 @@
 {
     "CommandCenterPath": "./path/to/CommandCenter.exe",
-    "LocalReplayDirectory": "./integration_test_configs/TestMatch_RandomMovementBot2Eliminated/Replays/",
+    "LocalReplayDirectory": "./integration_test_configs/TestMatch_RandomMovementBot2Eliminated/",
     "UploadResultLocation": "http://127.0.0.1/fileupload9uysm34.php",
     "MaxGameTime": "60480",
     "MatchupListFile": "./integration_test_configs/TestMatch_RandomMovementBot2Eliminated/matchuplist",
