@@ -764,16 +764,16 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	PrintThread{} << "9" << std::endl;
 	if (server.HasRequest() && server.connections_.size() > 0)
 	{
-		PrintThread{} << "10" << std::endl;
-		server.SendRequest();
+        PrintThread{} << "10" << std::endl;
+		server.SendRequest(client.connection_);
 	}
 	PrintThread{} << "11" << std::endl;
 	sc2::SleepFor(1000);
 	PrintThread{} << "12" << std::endl;
 	if (server2.HasRequest() && server2.connections_.size() > 0)
 	{
-		PrintThread{} << "13" << std::endl;
-		server2.SendRequest();
+        PrintThread{} << "13" << std::endl;
+		server2.SendRequest(client2.connection_);
 	}
 	PrintThread{} << "14" << std::endl;
 	//ChangeBotNames(ReplayFile, Agent1.BotName, Agent2.BotName);
