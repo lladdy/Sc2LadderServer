@@ -557,7 +557,8 @@ ResultType LadderManager::StartGameVsDefault(const BotConfig &Agent1, sc2::Race 
 	}
 
 	std::string ReplayDir = Config->GetValue("LocalReplayDirectory");
-	std::string ReplayFile = ReplayDir + Agent1.BotName + "v" + GetDifficultyString(CompDifficulty) + "-" + RemoveMapExtension(Map) + ".Sc2Replay";
+	auto now = std::chrono::system_clock::now();
+	std::string ReplayFile = ReplayDir + std::to_string(std::chrono::system_clock::to_time_t (now)) + "-" + Agent1.BotName + "v" + GetDifficultyString(CompDifficulty) + "-" + RemoveMapExtension(Map) + ".Sc2Replay";
 	ReplayFile.erase(remove_if(ReplayFile.begin(), ReplayFile.end(), isspace), ReplayFile.end());
 
 	SaveReplay(&client, ReplayFile);
@@ -737,9 +738,11 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	sc2::SleepFor(1000);
 	std::string ReplayDir = Config->GetValue("LocalReplayDirectory");
 
-	std::string ReplayFile = ReplayDir + Agent1.BotName + "v" + Agent2.BotName + "-" + RemoveMapExtension(Map) + ".SC2Replay";
+    auto now = std::chrono::system_clock::now();
+	std::string ReplayFile = ReplayDir + std::to_string(std::chrono::system_clock::to_time_t (now)) + "-" + Agent1.BotName + "v" + Agent2.BotName + "-" + RemoveMapExtension(Map) + ".SC2Replay";
 	ReplayFile.erase(remove_if(ReplayFile.begin(), ReplayFile.end(), isspace), ReplayFile.end());
 	PrintThread{} << "2" << std::endl;
+
 	if (!SaveReplay(&client, ReplayFile))
 	{
 		PrintThread{} << "3" << std::endl;
