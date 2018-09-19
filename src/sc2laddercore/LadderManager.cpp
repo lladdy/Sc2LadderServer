@@ -610,41 +610,67 @@ sc2::GameRequestPtr CreateStartGameRequest()
 }
 
 
-void StartDebugBot1(unsigned long *ProcessId)
+void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsigned long *ProcessId)
 {
     pid_t pID = fork();
 
     if (pID < 0)
     {
-        std::cerr << std::string("Can't fork the bot process, error: ") +
+        std::cerr << Agent.BotName + ": Can't fork the bot process, error: " +
                      strerror(errno) << std::endl;
         return;
     }
 
     if (pID == 0) // child
     {
+        int ret = -1;//chdir(Agent.RootPath.c_str());
+//        if (ret < 0) {
+//            std::cerr << Agent.BotName +
+//                         ": Can't change working directory to " + Agent.RootPath +
+//                         ", error: " + strerror(errno) << std::endl;
+//            exit(errno);
+//        }
+
+//        if (RedirectOutput(Agent, STDERR_FILENO, "stderr.log") < 0)
+//            exit(errno);
+//
+//        if (Agent.Debug)
+//        {
+//            if (RedirectOutput(Agent, STDOUT_FILENO, "stdout.log") < 0)
+//                exit(errno);
+//        }
+//        else
+//            close(STDOUT_FILENO);
+//
+//        close(STDIN_FILENO);
+
         std::vector<char*> unix_cmd;
-        unix_cmd.push_back(const_cast<char*>("DebugBot"));
-        unix_cmd.push_back(const_cast<char*>("-d"));
-        unix_cmd.push_back(const_cast<char*>("RandomMovementThenLose"));
-//        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
-        unix_cmd.push_back(const_cast<char*>("--GamePort"));
-        unix_cmd.push_back(const_cast<char*>("5677"));
-        unix_cmd.push_back(const_cast<char*>("--StartPort"));
-        unix_cmd.push_back(const_cast<char*>("5690"));
+        std::istringstream stream(CommandLine);
+        std::istream_iterator<std::string> begin(stream), end;
+        std::vector<std::string> tokens(begin, end);
+        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
+        for (const auto& i : tokens)
+            unix_cmd.push_back(const_cast<char*>(i.c_str()));
 
         // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
         // This hack is needed because we have to change the working directory
         // before calling to exec.
-//        unix_cmd[0] = const_cast<char*>("DebugBot");
+//        if (Agent.Type == BinaryCpp)
+//            unix_cmd[0] = const_cast<char*>(Agent.FileName.c_str());
 
         unix_cmd.push_back(NULL);
 
-        int ret = execv(unix_cmd[0], &unix_cmd[0]);
+        // NOTE (alkurbatov): For the Python bots we need to search in the PATH
+        // for the interpreter.
+        if (Agent.Type == Python || Agent.Type == Wine || Agent.Type == Mono || Agent.Type == DotNetCore || Agent.Type == Java)
+            ret = execvp(unix_cmd.front(), &unix_cmd.front());
+        else
+            ret = execv(unix_cmd.front(), &unix_cmd.front());
 
         if (ret < 0)
         {
-            std::cerr << std::string(": Failed to execute, error: ") + strerror(errno) << std::endl;
+            std::cerr << Agent.BotName + ": Failed to execute '" + CommandLine +
+                         "', error: " + strerror(errno) << std::endl;
             exit(errno);
         }
 
@@ -657,46 +683,121 @@ void StartDebugBot1(unsigned long *ProcessId)
     int exit_status = 0;
     int ret = waitpid(pID, &exit_status, 0);
     if (ret < 0) {
-        std::cerr << std::string("Can't wait for the child process, error:") +
+        std::cerr << Agent.BotName +
+                     ": Can't wait for the child process, error:" +
                      strerror(errno) << std::endl;
     }
+//    pid_t pID = fork();
+//
+//    if (pID < 0)
+//    {
+//        std::cerr << std::string("Can't fork the bot process, error: ") +
+//                     strerror(errno) << std::endl;
+//        return;
+//    }
+//
+//    if (pID == 0) // child
+//    {
+//        std::vector<char*> unix_cmd;
+//        unix_cmd.push_back(const_cast<char*>("DebugBot"));
+//        unix_cmd.push_back(const_cast<char*>("-d"));
+//        unix_cmd.push_back(const_cast<char*>("RandomMovementThenLose"));
+////        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
+//        unix_cmd.push_back(const_cast<char*>("--GamePort"));
+//        unix_cmd.push_back(const_cast<char*>("5677"));
+//        unix_cmd.push_back(const_cast<char*>("--StartPort"));
+//        unix_cmd.push_back(const_cast<char*>("5690"));
+//
+//        // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
+//        // This hack is needed because we have to change the working directory
+//        // before calling to exec.
+////        unix_cmd[0] = const_cast<char*>("DebugBot");
+//
+//        unix_cmd.push_back(NULL);
+//
+//        int ret = execv(unix_cmd[0], &unix_cmd[0]);
+//
+//        if (ret < 0)
+//        {
+//            std::cerr << std::string(": Failed to execute, error: ") + strerror(errno) << std::endl;
+//            exit(errno);
+//        }
+//
+//        exit(0);
+//    }
+//
+//    // parent
+//    *ProcessId = pID;
+//
+//    int exit_status = 0;
+//    int ret = waitpid(pID, &exit_status, 0);
+//    if (ret < 0) {
+//        std::cerr << std::string("Can't wait for the child process, error:") +
+//                     strerror(errno) << std::endl;
+//    }
 }
 
-void StartDebugBot2(unsigned long *ProcessId)
+void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsigned long *ProcessId)
 {
     pid_t pID = fork();
 
     if (pID < 0)
     {
-        std::cerr << std::string("Can't fork the bot process, error: ") +
+        std::cerr << Agent.BotName + ": Can't fork the bot process, error: " +
                      strerror(errno) << std::endl;
         return;
     }
 
     if (pID == 0) // child
     {
+        int ret = -1;//chdir(Agent.RootPath.c_str());
+//        if (ret < 0) {
+//            std::cerr << Agent.BotName +
+//                         ": Can't change working directory to " + Agent.RootPath +
+//                         ", error: " + strerror(errno) << std::endl;
+//            exit(errno);
+//        }
+
+//        if (RedirectOutput(Agent, STDERR_FILENO, "stderr.log") < 0)
+//            exit(errno);
+//
+//        if (Agent.Debug)
+//        {
+//            if (RedirectOutput(Agent, STDOUT_FILENO, "stdout.log") < 0)
+//                exit(errno);
+//        }
+//        else
+//            close(STDOUT_FILENO);
+//
+//        close(STDIN_FILENO);
+
         std::vector<char*> unix_cmd;
-        unix_cmd.push_back(const_cast<char*>("DebugBot"));
-        unix_cmd.push_back(const_cast<char*>("--GamePort"));
-        unix_cmd.push_back(const_cast<char*>("5678"));
-        unix_cmd.push_back(const_cast<char*>("--StartPort"));
-        unix_cmd.push_back(const_cast<char*>("5690"));
-//        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
-//        unix_cmd.push_back(const_cast<char*>("--GamePort 5678"));
-//        unix_cmd.push_back(const_cast<char*>("--StartPort 5690"));
+        std::istringstream stream(CommandLine);
+        std::istream_iterator<std::string> begin(stream), end;
+        std::vector<std::string> tokens(begin, end);
+        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
+        for (const auto& i : tokens)
+            unix_cmd.push_back(const_cast<char*>(i.c_str()));
 
         // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
         // This hack is needed because we have to change the working directory
         // before calling to exec.
-//		unix_cmd[0] = const_cast<char*>("DebugBot");
+//        if (Agent.Type == BinaryCpp)
+//            unix_cmd[0] = const_cast<char*>(Agent.FileName.c_str());
 
         unix_cmd.push_back(NULL);
 
-        int ret = execv(unix_cmd[0], &unix_cmd[0]);
+        // NOTE (alkurbatov): For the Python bots we need to search in the PATH
+        // for the interpreter.
+        if (Agent.Type == Python || Agent.Type == Wine || Agent.Type == Mono || Agent.Type == DotNetCore || Agent.Type == Java)
+            ret = execvp(unix_cmd.front(), &unix_cmd.front());
+        else
+            ret = execv(unix_cmd.front(), &unix_cmd.front());
 
         if (ret < 0)
         {
-            std::cerr << std::string(": Failed to execute, error: ") + strerror(errno) << std::endl;
+            std::cerr << Agent.BotName + ": Failed to execute '" + CommandLine +
+                         "', error: " + strerror(errno) << std::endl;
             exit(errno);
         }
 
@@ -709,9 +810,58 @@ void StartDebugBot2(unsigned long *ProcessId)
     int exit_status = 0;
     int ret = waitpid(pID, &exit_status, 0);
     if (ret < 0) {
-        std::cerr << std::string("Can't wait for the child process, error:") +
+        std::cerr << Agent.BotName +
+                     ": Can't wait for the child process, error:" +
                      strerror(errno) << std::endl;
     }
+//    pid_t pID = fork();
+//
+//    if (pID < 0)
+//    {
+//        std::cerr << std::string("Can't fork the bot process, error: ") +
+//                     strerror(errno) << std::endl;
+//        return;
+//    }
+//
+//    if (pID == 0) // child
+//    {
+//        std::vector<char*> unix_cmd;
+//        unix_cmd.push_back(const_cast<char*>("DebugBot"));
+//        unix_cmd.push_back(const_cast<char*>("--GamePort"));
+//        unix_cmd.push_back(const_cast<char*>("5678"));
+//        unix_cmd.push_back(const_cast<char*>("--StartPort"));
+//        unix_cmd.push_back(const_cast<char*>("5690"));
+////        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
+////        unix_cmd.push_back(const_cast<char*>("--GamePort 5678"));
+////        unix_cmd.push_back(const_cast<char*>("--StartPort 5690"));
+//
+//        // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
+//        // This hack is needed because we have to change the working directory
+//        // before calling to exec.
+////		unix_cmd[0] = const_cast<char*>("DebugBot");
+//
+//        unix_cmd.push_back(NULL);
+//
+//        int ret = execv(unix_cmd[0], &unix_cmd[0]);
+//
+//        if (ret < 0)
+//        {
+//            std::cerr << std::string(": Failed to execute, error: ") + strerror(errno) << std::endl;
+//            exit(errno);
+//        }
+//
+//        exit(0);
+//    }
+//
+//    // parent
+//    *ProcessId = pID;
+//
+//    int exit_status = 0;
+//    int ret = waitpid(pID, &exit_status, 0);
+//    if (ret < 0) {
+//        std::cerr << std::string("Can't wait for the child process, error:") +
+//                     strerror(errno) << std::endl;
+//    }
 }
 
 ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Agent2, const std::string &Map, int32_t &GameLoop)
@@ -790,8 +940,8 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	unsigned long Bot2ThreadId = 0;
 //	auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1Path, &Bot1ThreadId);
 //	auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2Path, &Bot2ThreadId);
-	auto bot1ProgramThread = std::async(&StartDebugBot1, &Bot1ThreadId);
-	auto bot2ProgramThread = std::async(&StartDebugBot2, &Bot2ThreadId);
+	auto bot1ProgramThread = std::async(&StartDebugBot1, Agent1, Agent1Path, &Bot1ThreadId);
+	auto bot2ProgramThread = std::async(&StartDebugBot2, Agent2, Agent2Path, &Bot2ThreadId);
 	sc2::SleepFor(500);
 	sc2::SleepFor(500);
 

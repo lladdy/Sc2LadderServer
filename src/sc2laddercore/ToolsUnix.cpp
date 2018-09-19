@@ -55,39 +55,40 @@ void StartBotProcess(const BotConfig &Agent, const std::string &CommandLine, uns
 
     if (pID == 0) // child
     {
-        int ret = chdir(Agent.RootPath.c_str());
-        if (ret < 0) {
-            std::cerr << Agent.BotName +
-                ": Can't change working directory to " + Agent.RootPath +
-                ", error: " + strerror(errno) << std::endl;
-            exit(errno);
-        }
+        int ret = -1;//chdir(Agent.RootPath.c_str());
+//        if (ret < 0) {
+//            std::cerr << Agent.BotName +
+//                ": Can't change working directory to " + Agent.RootPath +
+//                ", error: " + strerror(errno) << std::endl;
+//            exit(errno);
+//        }
 
-        if (RedirectOutput(Agent, STDERR_FILENO, "stderr.log") < 0)
-            exit(errno);
-
-        if (Agent.Debug)
-        {
-            if (RedirectOutput(Agent, STDOUT_FILENO, "stdout.log") < 0)
-                exit(errno);
-        }
-        else
-            close(STDOUT_FILENO);
-
-        close(STDIN_FILENO);
+//        if (RedirectOutput(Agent, STDERR_FILENO, "stderr.log") < 0)
+//            exit(errno);
+//
+//        if (Agent.Debug)
+//        {
+//            if (RedirectOutput(Agent, STDOUT_FILENO, "stdout.log") < 0)
+//                exit(errno);
+//        }
+//        else
+//            close(STDOUT_FILENO);
+//
+//        close(STDIN_FILENO);
 
         std::vector<char*> unix_cmd;
         std::istringstream stream(CommandLine);
         std::istream_iterator<std::string> begin(stream), end;
         std::vector<std::string> tokens(begin, end);
+        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
         for (const auto& i : tokens)
             unix_cmd.push_back(const_cast<char*>(i.c_str()));
 
         // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
         // This hack is needed because we have to change the working directory
         // before calling to exec.
-        if (Agent.Type == BinaryCpp)
-            unix_cmd[0] = const_cast<char*>(Agent.FileName.c_str());
+//        if (Agent.Type == BinaryCpp)
+//            unix_cmd[0] = const_cast<char*>(Agent.FileName.c_str());
 
         unix_cmd.push_back(NULL);
 
