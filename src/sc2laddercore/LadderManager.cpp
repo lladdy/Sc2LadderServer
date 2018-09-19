@@ -716,7 +716,7 @@ void StartDebugBot2(unsigned long *ProcessId)
 
 ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Agent2, const std::string &Map, int32_t &GameLoop)
 {
-    //	using namespace std::chrono_literals;
+    using namespace std::chrono_literals;
 	// Setup server that mimicks sc2.
 	std::string Agent1Path = GetBotCommandLine(Agent1, 5677, PORT_START, Agent2.PlayerId);
 	std::string Agent2Path = GetBotCommandLine(Agent2, 5678, PORT_START, Agent1.PlayerId);
