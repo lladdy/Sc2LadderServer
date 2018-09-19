@@ -786,12 +786,12 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 			PrintThread{} << "Create game successful" << std::endl << std::endl;
 		}
 	}
-//	unsigned long Bot1ThreadId = 0;
-//	unsigned long Bot2ThreadId = 0;
-//	auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1Path, &Bot1ThreadId);
-//	auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2Path, &Bot2ThreadId);
-//	sc2::SleepFor(500);
-//	sc2::SleepFor(500);
+	unsigned long Bot1ThreadId = 0;
+	unsigned long Bot2ThreadId = 0;
+	auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1Path, &Bot1ThreadId);
+	auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2Path, &Bot2ThreadId);
+	sc2::SleepFor(500);
+	sc2::SleepFor(500);
 //
 //	//toDo check here already if the bots crashed.
 //
@@ -1056,18 +1056,19 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 //	}
 //
 //
-    std::cout << "Start bots" << std::endl;
-	unsigned long Bot1ThreadId = 0;
-	unsigned long Bot2ThreadId = 0;
-	bool lose1 = true;
-    bool lose2 = false;
-
-	auto bot1ProgramThread = std::async(&StartDebugBot1, &Bot1ThreadId);
-	auto bot2ProgramThread = std::async(&StartDebugBot2, &Bot2ThreadId);
-//    auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1.RootPath, &Bot1ThreadId);
-//    auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2.RootPath, &Bot2ThreadId);
-	sc2::SleepFor(500);
-	sc2::SleepFor(500);
+//-------------------------
+//    std::cout << "Start bots" << std::endl;
+//	unsigned long Bot1ThreadId = 0;
+//	unsigned long Bot2ThreadId = 0;
+//	bool lose1 = true;
+//    bool lose2 = false;
+//
+//	auto bot1ProgramThread = std::async(&StartDebugBot1, &Bot1ThreadId);
+//	auto bot2ProgramThread = std::async(&StartDebugBot2, &Bot2ThreadId);
+////    auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1.RootPath, &Bot1ThreadId);
+////    auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2.RootPath, &Bot2ThreadId);
+//	sc2::SleepFor(500);
+//	sc2::SleepFor(500);
 
 
 	// RUN GAME
