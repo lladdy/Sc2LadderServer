@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
 
 	TEST(TestLadderConfig);
 
-	TEST(TestMatch_Bot1Eliminated);
+//	TEST(TestMatch_Bot1Eliminated);
 	TEST(TestMatch_RandomMovementBot2Eliminated);
 	//TEST(sc2ai::TestMatch_Bot1Leave);
 	//TEST(sc2ai::TestMatch_Bot2Leave);
