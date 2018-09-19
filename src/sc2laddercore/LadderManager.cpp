@@ -724,9 +724,9 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	{
 		return ResultType::InitializationError;
 	}
-	sc2::Server server1;
+	sc2::Server server;
 	sc2::Server server2;
-	server1.Listen("5677", "100000", "100000", "5");
+	server.Listen("5677", "100000", "100000", "5");
 	server2.Listen("5678", "100000", "100000", "5");
 	// Find game executable and run it.
 	sc2::ProcessSettings process_settings;
@@ -746,9 +746,9 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	);
 
 	// Connect to running sc2 process.
-	sc2::Connection client1;
+	sc2::Connection client;
 	int connectionAttemptsClient1 = 0;
-	while (!client1.Connect("127.0.0.1", 5679, false))
+	while (!client.Connect("127.0.0.1", 5679, false))
 	{
 		connectionAttemptsClient1++;
 		sc2::SleepFor(1000);
@@ -776,9 +776,9 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent1.Race, nullptr, sc2::Easy));
 	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent2.Race, nullptr, sc2::Easy));
 	sc2::GameRequestPtr Create_game_request = CreateStartGameRequest(Map, Players, process_settings);
-	client1.Send(Create_game_request.get());
+	client.Send(Create_game_request.get());
 	SC2APIProtocol::Response* create_response = nullptr;
-	if (client1.Receive(create_response, 100000))
+	if (client.Receive(create_response, 100000))
 	{
 		PrintThread{} << "Recieved create game response " << create_response->data().DebugString() << std::endl;
 		if (ProcessResponse(create_response->create_game()))
@@ -797,7 +797,7 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 
 	//toDo check here already if the bots crashed.
 
-	auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, &Agent1.BotName, MaxGameTime);
+	auto bot1UpdateThread = std::async(&GameUpdate, &client, &server, &Agent1.BotName, MaxGameTime);
 	auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &Agent2.BotName, MaxGameTime);
 	sc2::SleepFor(1000);
 
