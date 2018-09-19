@@ -716,211 +716,34 @@ void StartDebugBot2(unsigned long *ProcessId)
 
 ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Agent2, const std::string &Map, int32_t &GameLoop)
 {
-    // START INSTANCES
-
-    sc2::Server server1;
-    sc2::Server server2;
-    std::cout << "Servers listening" << std::endl;
+    //	using namespace std::chrono_literals;
+	// Setup server that mimicks sc2.
+	std::string Agent1Path = GetBotCommandLine(Agent1, 5677, PORT_START, Agent2.PlayerId);
+	std::string Agent2Path = GetBotCommandLine(Agent2, 5678, PORT_START, Agent1.PlayerId);
+	if (Agent1Path == "" || Agent2Path == "")
+	{
+		return ResultType::InitializationError;
+	}
+	sc2::Server server1;
+	sc2::Server server2;
 	server1.Listen("5677", "100000", "100000", "5");
 	server2.Listen("5678", "100000", "100000", "5");
-
-
-    std::cout << "Starting SC2 Instances" << std::endl;
 	// Find game executable and run it.
 	sc2::ProcessSettings process_settings;
 	sc2::GameSettings game_settings;
 	sc2::ParseSettings(CoordinatorArgc, CoordinatorArgv, process_settings, game_settings);
 	uint64_t Bot1ProcessId = sc2::StartProcess(process_settings.process_path,
-		{ "-listen", "127.0.0.1",
+	{ "-listen", "127.0.0.1",
 		"-port", "5679",
-//		"-verbose",
 		"-displayMode", "0",
 		"-dataVersion", process_settings.data_version }
 	);
 	uint64_t Bot2ProcessId = sc2::StartProcess(process_settings.process_path,
 		{ "-listen", "127.0.0.1",
 		"-port", "5680",
-//		"-verbose",
 		"-displayMode", "0",
 		"-dataVersion", process_settings.data_version }
 	);
-
-    std::cout << "Connecting clients" << std::endl;
-
-	// Connect to running sc2 process.
-	int connectionAttemptsClient1 = 0;
-    sc2::Connection client1;
-	while (!client1.Connect("127.0.0.1", 5679, false))
-	{
-		connectionAttemptsClient1++;
-		sc2::SleepFor(1000);
-		if (connectionAttemptsClient1 > 60)
-		{
-			std::cout << "Failed to connect client 1. BotProcessID: " << Bot1ProcessId << std::endl;
-            return ResultType::Error;
-		}
-	}
-	int connectionAttemptsClient2 = 0;
-    sc2::Connection client2;
-	while (!client2.Connect("127.0.0.1", 5680, false))
-	{
-		connectionAttemptsClient2++;
-		sc2::SleepFor(1000);
-		if (connectionAttemptsClient2 > 60)
-		{
-			std::cout << "Failed to connect client 2. BotProcessID: " << Bot2ProcessId << std::endl;
-            return ResultType::Error;
-		}
-	}
-
-    std::cout << "Create game request" << std::endl;
-    std::vector<sc2::PlayerSetup> Players;
-
-	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent1.Race, nullptr, sc2::Easy));
-	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent2.Race, nullptr, sc2::Easy));
-//	sc2::GameRequestPtr Create_game_request = CreateStartGameRequest(Map, Players, process_settings);
-	sc2::GameRequestPtr Create_game_request = CreateStartGameRequest();
-	client1.Send(Create_game_request.get());
-	SC2APIProtocol::Response* create_response = nullptr;
-	if (client1.Receive(create_response, 100000))
-	{
-		std::cout << "Recieved create game response " << create_response->data().DebugString() << std::endl;
-		if (ProcessResponse(create_response->create_game()))
-		{
-			std::cout << "Create game successful" << std::endl << std::endl;
-		}
-	}
-
-
-    std::cout << "Start bots" << std::endl;
-	unsigned long Bot1ThreadId = 0;
-	unsigned long Bot2ThreadId = 0;
-	bool lose1 = true;
-    bool lose2 = false;
-
-	auto bot1ProgramThread = std::async(&StartDebugBot1, &Bot1ThreadId);
-	auto bot2ProgramThread = std::async(&StartDebugBot2, &Bot2ThreadId);
-//    auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1.RootPath, &Bot1ThreadId);
-//    auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2.RootPath, &Bot2ThreadId);
-	sc2::SleepFor(500);
-	sc2::SleepFor(500);
-
-
-	// RUN GAME
-
-    std::cout << "Game update" << std::endl;
-	std::string db1 = "DB1";
-    std::string db2 = "DB2";
-
-//	auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, &db1);
-//	auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &db2);
-    auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, &db1, MaxGameTime);
-    auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &db2, MaxGameTime);
-	sc2::SleepFor(1000);
-
-	bool GameRunning = true;
-	//sc2::ProtoInterface proto_1;
-	while (GameRunning)
-	{
-
-//        std::cout << "Game running" << std::endl;
-		auto update1status = bot1UpdateThread.wait_for(std::chrono::milliseconds(1));
-		auto update2status = bot2UpdateThread.wait_for(std::chrono::milliseconds(0));
-		auto thread1Status = bot1ProgramThread.wait_for(std::chrono::milliseconds(0));
-		auto thread2Status = bot2ProgramThread.wait_for(std::chrono::milliseconds(0));
-		if (update1status == std::future_status::ready)
-		{
-			GameRunning = false;
-			break;
-		}
-		if (update2status == std::future_status::ready)
-		{
-			GameRunning = false;
-			break;
-		}
-		if (thread1Status == std::future_status::ready)
-		{
-			GameRunning = false;
-		}
-		if (thread2Status == std::future_status::ready)
-		{
-			GameRunning = false;
-		}
-
-	}
-
-    std::cout << "Saving replay" << std::endl;
-	auto now = std::chrono::system_clock::now();
-	std::string replayName = std::to_string(std::chrono::system_clock::to_time_t (now))
-	        + "_DebugBot1VsDebugBot2.SC2Replay";
-	SaveReplay(&client1,replayName);
-
-    sc2::SleepFor(1000);
-    if (!SendDataToConnection(&client1, CreateLeaveGameRequest().get()))
-    {
-        std::cout << "CreateLeaveGameRequest failed for Client 1." << std::endl;
-    }
-    sc2::SleepFor(1000);
-    if (!SendDataToConnection(&client2, CreateLeaveGameRequest().get()))
-    {
-        std::cout << "CreateLeaveGameRequest failed for Client 2." << std::endl;
-    }
-
-
-    sc2::SleepFor(1000);
-    if (server1.HasRequest() && server1.connections_.size() > 0)
-    {
-        server1.SendRequest(client1.connection_);
-    }
-    sc2::SleepFor(1000);
-    if (server2.HasRequest() && server2.connections_.size() > 0)
-    {
-        server2.SendRequest(client1.connection_);
-    }
-
-    std::cout << "Killing Bot processes" << std::endl;
-    int ret = kill(Bot1ThreadId, SIGKILL);
-    if (ret < 0)
-    {
-        std::cout << std::string("Failed to send SIGKILL, error:") +
-                     strerror(errno) << std::endl;
-    }
-    ret = kill(Bot2ThreadId, SIGKILL);
-    if (ret < 0)
-    {
-        std::cout << std::string("Failed to send SIGKILL, error:") +
-                     strerror(errno) << std::endl;
-    }
-    return ResultType::Error;
-	
-//	using namespace std::chrono_literals;
-//	// Setup server that mimicks sc2.
-//	std::string Agent1Path = GetBotCommandLine(Agent1, 5677, PORT_START, Agent2.PlayerId);
-//	std::string Agent2Path = GetBotCommandLine(Agent2, 5678, PORT_START, Agent1.PlayerId);
-//	if (Agent1Path == "" || Agent2Path == "")
-//	{
-//		return ResultType::InitializationError;
-//	}
-//	sc2::Server server;
-//	sc2::Server server2;
-//	server.Listen("5677", "100000", "100000", "5");
-//	server2.Listen("5678", "100000", "100000", "5");
-//	// Find game executable and run it.
-//	sc2::ProcessSettings process_settings;
-//	sc2::GameSettings game_settings;
-//	sc2::ParseSettings(CoordinatorArgc, CoordinatorArgv, process_settings, game_settings);
-//	uint64_t Bot1ProcessId = sc2::StartProcess(process_settings.process_path,
-//	{ "-listen", "127.0.0.1",
-//		"-port", "5679",
-//		"-displayMode", "0",
-//		"-dataVersion", process_settings.data_version }
-//	);
-//	uint64_t Bot2ProcessId = sc2::StartProcess(process_settings.process_path,
-//		{ "-listen", "127.0.0.1",
-//		"-port", "5680",
-//		"-displayMode", "0",
-//		"-dataVersion", process_settings.data_version }
-//	);
 //
 //	// Connect to running sc2 process.
 //	sc2::Connection client;
@@ -1154,6 +977,183 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 //		KillSc2Process(Bot2ThreadId);
 //	}
 //	return CurrentResult;
+
+    // START INSTANCES
+
+//    sc2::Server server1;
+//    sc2::Server server2;
+//    std::cout << "Servers listening" << std::endl;
+//	server1.Listen("5677", "100000", "100000", "5");
+//	server2.Listen("5678", "100000", "100000", "5");
+//
+//
+//    std::cout << "Starting SC2 Instances" << std::endl;
+//	// Find game executable and run it.
+//	sc2::ProcessSettings process_settings;
+//	sc2::GameSettings game_settings;
+//	sc2::ParseSettings(CoordinatorArgc, CoordinatorArgv, process_settings, game_settings);
+//	uint64_t Bot1ProcessId = sc2::StartProcess(process_settings.process_path,
+//		{ "-listen", "127.0.0.1",
+//		"-port", "5679",
+////		"-verbose",
+//		"-displayMode", "0",
+//		"-dataVersion", process_settings.data_version }
+//	);
+//	uint64_t Bot2ProcessId = sc2::StartProcess(process_settings.process_path,
+//		{ "-listen", "127.0.0.1",
+//		"-port", "5680",
+////		"-verbose",
+//		"-displayMode", "0",
+//		"-dataVersion", process_settings.data_version }
+//	);
+
+    std::cout << "Connecting clients" << std::endl;
+
+	// Connect to running sc2 process.
+	int connectionAttemptsClient1 = 0;
+    sc2::Connection client1;
+	while (!client1.Connect("127.0.0.1", 5679, false))
+	{
+		connectionAttemptsClient1++;
+		sc2::SleepFor(1000);
+		if (connectionAttemptsClient1 > 60)
+		{
+			std::cout << "Failed to connect client 1. BotProcessID: " << Bot1ProcessId << std::endl;
+            return ResultType::Error;
+		}
+	}
+	int connectionAttemptsClient2 = 0;
+    sc2::Connection client2;
+	while (!client2.Connect("127.0.0.1", 5680, false))
+	{
+		connectionAttemptsClient2++;
+		sc2::SleepFor(1000);
+		if (connectionAttemptsClient2 > 60)
+		{
+			std::cout << "Failed to connect client 2. BotProcessID: " << Bot2ProcessId << std::endl;
+            return ResultType::Error;
+		}
+	}
+
+    std::cout << "Create game request" << std::endl;
+    std::vector<sc2::PlayerSetup> Players;
+
+	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent1.Race, nullptr, sc2::Easy));
+	Players.push_back(sc2::PlayerSetup(sc2::PlayerType::Participant, Agent2.Race, nullptr, sc2::Easy));
+//	sc2::GameRequestPtr Create_game_request = CreateStartGameRequest(Map, Players, process_settings);
+	sc2::GameRequestPtr Create_game_request = CreateStartGameRequest();
+	client1.Send(Create_game_request.get());
+	SC2APIProtocol::Response* create_response = nullptr;
+	if (client1.Receive(create_response, 100000))
+	{
+		std::cout << "Recieved create game response " << create_response->data().DebugString() << std::endl;
+		if (ProcessResponse(create_response->create_game()))
+		{
+			std::cout << "Create game successful" << std::endl << std::endl;
+		}
+	}
+
+
+    std::cout << "Start bots" << std::endl;
+	unsigned long Bot1ThreadId = 0;
+	unsigned long Bot2ThreadId = 0;
+	bool lose1 = true;
+    bool lose2 = false;
+
+	auto bot1ProgramThread = std::async(&StartDebugBot1, &Bot1ThreadId);
+	auto bot2ProgramThread = std::async(&StartDebugBot2, &Bot2ThreadId);
+//    auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1.RootPath, &Bot1ThreadId);
+//    auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2.RootPath, &Bot2ThreadId);
+	sc2::SleepFor(500);
+	sc2::SleepFor(500);
+
+
+	// RUN GAME
+
+    std::cout << "Game update" << std::endl;
+	std::string db1 = "DB1";
+    std::string db2 = "DB2";
+
+//	auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, &db1);
+//	auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &db2);
+    auto bot1UpdateThread = std::async(&GameUpdate, &client1, &server1, &db1, MaxGameTime);
+    auto bot2UpdateThread = std::async(&GameUpdate, &client2, &server2, &db2, MaxGameTime);
+	sc2::SleepFor(1000);
+
+	bool GameRunning = true;
+	//sc2::ProtoInterface proto_1;
+	while (GameRunning)
+	{
+
+//        std::cout << "Game running" << std::endl;
+		auto update1status = bot1UpdateThread.wait_for(std::chrono::milliseconds(1));
+		auto update2status = bot2UpdateThread.wait_for(std::chrono::milliseconds(0));
+		auto thread1Status = bot1ProgramThread.wait_for(std::chrono::milliseconds(0));
+		auto thread2Status = bot2ProgramThread.wait_for(std::chrono::milliseconds(0));
+		if (update1status == std::future_status::ready)
+		{
+			GameRunning = false;
+			break;
+		}
+		if (update2status == std::future_status::ready)
+		{
+			GameRunning = false;
+			break;
+		}
+		if (thread1Status == std::future_status::ready)
+		{
+			GameRunning = false;
+		}
+		if (thread2Status == std::future_status::ready)
+		{
+			GameRunning = false;
+		}
+
+	}
+
+    std::cout << "Saving replay" << std::endl;
+	auto now = std::chrono::system_clock::now();
+	std::string replayName = std::to_string(std::chrono::system_clock::to_time_t (now))
+	        + "_DebugBot1VsDebugBot2.SC2Replay";
+	SaveReplay(&client1,replayName);
+
+    sc2::SleepFor(1000);
+    if (!SendDataToConnection(&client1, CreateLeaveGameRequest().get()))
+    {
+        std::cout << "CreateLeaveGameRequest failed for Client 1." << std::endl;
+    }
+    sc2::SleepFor(1000);
+    if (!SendDataToConnection(&client2, CreateLeaveGameRequest().get()))
+    {
+        std::cout << "CreateLeaveGameRequest failed for Client 2." << std::endl;
+    }
+
+
+    sc2::SleepFor(1000);
+    if (server1.HasRequest() && server1.connections_.size() > 0)
+    {
+        server1.SendRequest(client1.connection_);
+    }
+    sc2::SleepFor(1000);
+    if (server2.HasRequest() && server2.connections_.size() > 0)
+    {
+        server2.SendRequest(client1.connection_);
+    }
+
+    std::cout << "Killing Bot processes" << std::endl;
+    int ret = kill(Bot1ThreadId, SIGKILL);
+    if (ret < 0)
+    {
+        std::cout << std::string("Failed to send SIGKILL, error:") +
+                     strerror(errno) << std::endl;
+    }
+    ret = kill(Bot2ThreadId, SIGKILL);
+    if (ret < 0)
+    {
+        std::cout << std::string("Failed to send SIGKILL, error:") +
+                     strerror(errno) << std::endl;
+    }
+    return ResultType::Error;
 }
 
 

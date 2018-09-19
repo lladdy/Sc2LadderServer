@@ -124,7 +124,9 @@ int main(int argc, char** argv) {
 	TEST(TestLadderConfig);
 
 //	TEST(TestMatch_Bot1Eliminated);
-	TEST(TestMatch_RandomMovementBot2Eliminated);
+	for (int i = 0; i < 20; ++i) {
+		TEST(TestMatch_RandomMovementBot2Eliminated);
+	}
 	//TEST(sc2ai::TestMatch_Bot1Leave);
 	//TEST(sc2ai::TestMatch_Bot2Leave);
 	//TEST(sc2ai::TestMatch_Bot1Quit);
