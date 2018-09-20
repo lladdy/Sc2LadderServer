@@ -662,7 +662,7 @@ void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsi
 //
 //        ret = execv(unix_cmd[0], &unix_cmd[0]);
 
-//        std::vector<char*> unix_cmd;
+        std::vector<char*> unix_cmd2;
         //std::istringstream stream("./DebugBot --GamePort 5678 --StartPort 5690 --LadderServer 127.0.0.1 --OpponentId 4543a5eb93b0441 -d RandomMovementThenLose");
         std::istringstream stream("./DebugBot --GamePort 5678 --StartPort 5690 -d RandomMovementThenLose");
         std::istream_iterator<std::string> begin(stream), end;
@@ -670,12 +670,18 @@ void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsi
 //        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
 
 
-//        for (const auto &i : tokens) {
-//            unix_cmd.push_back(const_cast<char *>(i.c_str()));
-//        }
+        for (const auto &i : tokens) {
+            unix_cmd2.push_back(const_cast<char *>(i.c_str()));
+        }
         std::ofstream myfile;
         myfile.open("bot1.txt");
         for (auto &i : unix_cmd) // access by reference to avoid copying
+        {
+            myfile << i;
+            myfile << "\n";
+
+        }
+        for (auto &i : unix_cmd2) // access by reference to avoid copying
         {
             myfile << i;
             myfile << "\n";
@@ -690,6 +696,7 @@ void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsi
 //            unix_cmd[0] = const_cast<char*>(Agent.FileName.c_str());
 
         unix_cmd.push_back(NULL);
+        unix_cmd2.push_back(NULL);
 
         // NOTE (alkurbatov): For the Python bots we need to search in the PATH
         // for the interpreter.
@@ -812,7 +819,7 @@ void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsi
         unix_cmd.push_back(const_cast<char*>("--StartPort"));
         unix_cmd.push_back(const_cast<char*>("5690"));
 
-        //std::vector<char *> unix_cmd;
+        std::vector<char *> unix_cmd2;
 //        std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690 --LadderServer 127.0.0.1 --OpponentId e9ca4c2b0fb3d30 -d DoNothing");
         std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690 -d DoNothing");
         std::istream_iterator<std::string> begin(stream), end;
@@ -820,12 +827,18 @@ void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsi
 //        unix_cmd.push_back(const_cast<char *>("./DebugBot"));
 
         for (const auto &i : tokens) {
-            //unix_cmd.push_back(const_cast<char *>(i.c_str()));
+            unix_cmd2.push_back(const_cast<char *>(i.c_str()));
         }
 
         std::ofstream myfile;
         myfile.open("bot2.txt");
         for (auto &i : unix_cmd) // access by reference to avoid copying
+        {
+            myfile << i;
+            myfile << "\n";
+
+        }
+        for (auto &i : unix_cmd2) // access by reference to avoid copying
         {
             myfile << i;
             myfile << "\n";
@@ -840,6 +853,7 @@ void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsi
 //            unix_cmd[0] = const_cast<char*>(Agent.FileName.c_str());
 
         unix_cmd.push_back(NULL);
+        unix_cmd2.push_back(NULL);
 
         // NOTE (alkurbatov): For the Python bots we need to search in the PATH
         // for the interpreter.
