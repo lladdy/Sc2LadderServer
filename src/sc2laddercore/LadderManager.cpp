@@ -777,7 +777,7 @@ void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsi
 
         std::vector<char *> unix_cmd2;
 //        std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690 --LadderServer 127.0.0.1 --OpponentId e9ca4c2b0fb3d30 -d DoNothing");
-        std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690 -d RandomMovementThenLose");
+        std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690");
         std::istream_iterator<std::string> begin(stream), end;
         std::vector<std::string> tokens(begin, end);
 //        unix_cmd.push_back(const_cast<char *>("./DebugBot"));
