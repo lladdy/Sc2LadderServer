@@ -42,7 +42,7 @@ public:
 				this->RandomMovement();
 			} break;
 			case DebugMode::RandomMovementThenLose: {
-				if (this->stepNumber < 7000) { // 7000 steps should be over 5 minutes in game
+				if (this->stepNumber < 1000) { // 7000 steps should be over 5 minutes in game
 					this->RandomMovement();
 				}
 				else {

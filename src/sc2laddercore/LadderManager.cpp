@@ -644,13 +644,44 @@ void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsi
 //
 //        close(STDIN_FILENO);
 
+
         std::vector<char*> unix_cmd;
-        std::istringstream stream(CommandLine);
+        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
+//        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
+        unix_cmd.push_back(const_cast<char*>("--GamePort"));
+        unix_cmd.push_back(const_cast<char*>("5678"));
+        unix_cmd.push_back(const_cast<char*>("--StartPort"));
+        unix_cmd.push_back(const_cast<char*>("5690"));
+//
+//        // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
+//        // This hack is needed because we have to change the working directory
+//        // before calling to exec.
+////        unix_cmd[0] = const_cast<char*>("DebugBot");
+//
+//        unix_cmd.push_back(NULL);
+//
+//        ret = execv(unix_cmd[0], &unix_cmd[0]);
+
+//        std::vector<char*> unix_cmd;
+        //std::istringstream stream("./DebugBot --GamePort 5678 --StartPort 5690 --LadderServer 127.0.0.1 --OpponentId 4543a5eb93b0441 -d RandomMovementThenLose");
+        std::istringstream stream("./DebugBot --GamePort 5678 --StartPort 5690 -d RandomMovementThenLose");
         std::istream_iterator<std::string> begin(stream), end;
         std::vector<std::string> tokens(begin, end);
-        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
-        for (const auto& i : tokens)
-            unix_cmd.push_back(const_cast<char*>(i.c_str()));
+//        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
+
+
+//        for (const auto &i : tokens) {
+//            unix_cmd.push_back(const_cast<char *>(i.c_str()));
+//        }
+        std::ofstream myfile;
+        myfile.open("bot1.txt");
+        for (auto &i : unix_cmd) // access by reference to avoid copying
+        {
+            myfile << i;
+            myfile << "\n";
+
+        }
+        myfile.close();
 
         // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
         // This hack is needed because we have to change the working directory
@@ -772,12 +803,35 @@ void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsi
 //        close(STDIN_FILENO);
 
         std::vector<char*> unix_cmd;
-        std::istringstream stream(CommandLine);
+        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
+        unix_cmd.push_back(const_cast<char*>("-d"));
+        unix_cmd.push_back(const_cast<char*>("RandomMovementThenLose"));
+//        unix_cmd.push_back(const_cast<char*>("--LadderServer 127.0.0.1"));
+        unix_cmd.push_back(const_cast<char*>("--GamePort"));
+        unix_cmd.push_back(const_cast<char*>("5677"));
+        unix_cmd.push_back(const_cast<char*>("--StartPort"));
+        unix_cmd.push_back(const_cast<char*>("5690"));
+
+        //std::vector<char *> unix_cmd;
+//        std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690 --LadderServer 127.0.0.1 --OpponentId e9ca4c2b0fb3d30 -d DoNothing");
+        std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690 -d DoNothing");
         std::istream_iterator<std::string> begin(stream), end;
         std::vector<std::string> tokens(begin, end);
-        unix_cmd.push_back(const_cast<char*>("./DebugBot"));
-        for (const auto& i : tokens)
-            unix_cmd.push_back(const_cast<char*>(i.c_str()));
+//        unix_cmd.push_back(const_cast<char *>("./DebugBot"));
+
+        for (const auto &i : tokens) {
+            //unix_cmd.push_back(const_cast<char *>(i.c_str()));
+        }
+
+        std::ofstream myfile;
+        myfile.open("bot2.txt");
+        for (auto &i : unix_cmd) // access by reference to avoid copying
+        {
+            myfile << i;
+            myfile << "\n";
+
+        }
+        myfile.close();
 
         // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
         // This hack is needed because we have to change the working directory
