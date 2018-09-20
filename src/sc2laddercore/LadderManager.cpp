@@ -652,8 +652,8 @@ void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsi
         unix_cmd.push_back(const_cast<char*>("5678"));
         unix_cmd.push_back(const_cast<char*>("--StartPort"));
         unix_cmd.push_back(const_cast<char*>("5690"));
-		unix_cmd.push_back(const_cast<char*>("-d"));
-		unix_cmd.push_back(const_cast<char*>("RandomMovement"));
+//		unix_cmd.push_back(const_cast<char*>("-d"));
+//		unix_cmd.push_back(const_cast<char*>("RandomMovement"));
 //
 //        // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
 //        // This hack is needed because we have to change the working directory
