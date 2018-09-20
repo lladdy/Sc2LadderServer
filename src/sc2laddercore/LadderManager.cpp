@@ -652,8 +652,8 @@ void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsi
         unix_cmd.push_back(const_cast<char*>("5678"));
         unix_cmd.push_back(const_cast<char*>("--StartPort"));
         unix_cmd.push_back(const_cast<char*>("5690"));
-        unix_cmd.push_back(const_cast<char*>("-d"));
-        unix_cmd.push_back(const_cast<char*>("DoNothing"));
+		unix_cmd.push_back(const_cast<char*>("-d"));
+		unix_cmd.push_back(const_cast<char*>("RandomMovementThenLose"));
 //
 //        // FIXME (alkurbatov): Unfortunately, the cmdline uses relative path.
 //        // This hack is needed because we have to change the working directory
@@ -705,7 +705,7 @@ void StartDebugBot1(const BotConfig &Agent, const std::string &CommandLine, unsi
         if (Agent.Type == Python || Agent.Type == Wine || Agent.Type == Mono || Agent.Type == DotNetCore || Agent.Type == Java)
             ret = execvp(unix_cmd.front(), &unix_cmd.front());
         else
-            ret = execv(unix_cmd2.front(), &unix_cmd2.front());
+            ret = execv(unix_cmd.front(), &unix_cmd.front());
 
         if (ret < 0)
         {
@@ -772,8 +772,8 @@ void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsi
         unix_cmd.push_back(const_cast<char*>("5677"));
         unix_cmd.push_back(const_cast<char*>("--StartPort"));
         unix_cmd.push_back(const_cast<char*>("5690"));
-        unix_cmd.push_back(const_cast<char*>("-d"));
-        unix_cmd.push_back(const_cast<char*>("RandomMovementThenLose"));
+//        unix_cmd.push_back(const_cast<char*>("-d"));
+//        unix_cmd.push_back(const_cast<char*>("RandomMovementThenLose"));
 
         std::vector<char *> unix_cmd2;
 //        std::istringstream stream("./DebugBot --GamePort 5677 --StartPort 5690 --LadderServer 127.0.0.1 --OpponentId e9ca4c2b0fb3d30 -d DoNothing");
@@ -816,7 +816,7 @@ void StartDebugBot2(const BotConfig &Agent, const std::string &CommandLine, unsi
         if (Agent.Type == Python || Agent.Type == Wine || Agent.Type == Mono || Agent.Type == DotNetCore || Agent.Type == Java)
             ret = execvp(unix_cmd.front(), &unix_cmd.front());
         else
-            ret = execv(unix_cmd2.front(), &unix_cmd2.front());
+            ret = execv(unix_cmd.front(), &unix_cmd.front());
 
         if (ret < 0)
         {
