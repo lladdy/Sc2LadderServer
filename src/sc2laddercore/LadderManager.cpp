@@ -914,10 +914,10 @@ ResultType LadderManager::StartGame(const BotConfig &Agent1, const BotConfig &Ag
 	}
 	unsigned long Bot1ThreadId = 0;
 	unsigned long Bot2ThreadId = 0;
-//	auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1Path, &Bot1ThreadId);
-//	auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2Path, &Bot2ThreadId);
-	auto bot1ProgramThread = std::async(&StartDebugBot1, Agent1, Agent1Path, &Bot1ThreadId);
-	auto bot2ProgramThread = std::async(&StartDebugBot2, Agent2, Agent2Path, &Bot2ThreadId);
+	auto bot1ProgramThread = std::async(&StartBotProcess, Agent1, Agent1Path, &Bot1ThreadId);
+	auto bot2ProgramThread = std::async(&StartBotProcess, Agent2, Agent2Path, &Bot2ThreadId);
+//	auto bot1ProgramThread = std::async(&StartDebugBot1, Agent1, Agent1Path, &Bot1ThreadId);
+//	auto bot2ProgramThread = std::async(&StartDebugBot2, Agent2, Agent2Path, &Bot2ThreadId);
 	sc2::SleepFor(500);
 	sc2::SleepFor(500);
 
